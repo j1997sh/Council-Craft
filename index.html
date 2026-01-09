@@ -1,1435 +1,1085 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Ward Lords — Campaign Mode v0.3</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ward Manager (UK) — Prototype</title>
   <style>
-    :root{
-      --bg:#0b1020; --ink:#e9ecff; --muted:#aab2ff; --line:rgba(255,255,255,0.12);
-      --good:#66ffcc; --warn:#ffd36a; --bad:#ff5a7a; --mid:rgba(255,255,255,0.06);
-    }
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;background:linear-gradient(180deg,#060914,var(--bg));color:var(--ink);}
-    .wrap{max-width:1250px;margin:0 auto;padding:14px;}
-    header{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
-    h1{margin:0;font-size:18px}
-    .sub{color:var(--muted);font-size:13px;max-width:980px;margin-top:2px;line-height:1.35}
-    .grid{display:grid;grid-template-columns:1.25fr .75fr;gap:10px}
-    .card{background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:14px;padding:12px}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .pill{background:rgba(255,255,255,0.06);border:1px solid var(--line);padding:8px 10px;border-radius:12px}
-    .pill .k{color:var(--muted);font-size:12px}
-    .pill .v{font-weight:1000;font-variant-numeric:tabular-nums}
-    button, select, input[type="range"]{
-      background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:var(--ink);
-      padding:9px 10px;border-radius:12px;font-weight:800;cursor:pointer
-    }
-    button:hover{background:rgba(255,255,255,0.12)}
-    button:active{transform:translateY(1px)}
-    button:disabled{opacity:.5;cursor:not-allowed}
-    select{padding:8px 10px}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-    .tab{padding:9px 12px;border-radius:12px;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.06);font-weight:900;cursor:pointer}
-    .tab.active{background:rgba(255,255,255,0.12)}
-    .small{font-size:12px;color:var(--muted);line-height:1.35}
-    .hr{height:1px;background:var(--line);margin:10px 0}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{padding:6px 6px;border-bottom:1px solid rgba(255,255,255,0.10);text-align:left;vertical-align:top}
-    th{color:var(--muted);font-size:12px;font-weight:1000;user-select:none;cursor:pointer}
-    .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);font-size:12px;color:var(--muted)}
-    .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
-    .log{white-space:pre-wrap;line-height:1.35;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12.5px;max-height:260px;overflow:auto;background:rgba(0,0,0,0.18);border:1px solid var(--line);border-radius:12px;padding:10px}
-    /* Map */
-    svg{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,0.03)}
-    .wardCell{cursor:pointer}
-    .wardCell rect{stroke:rgba(255,255,255,0.16);stroke-width:1}
-    .wardCell:hover rect{stroke:rgba(255,255,255,0.35);stroke-width:1.3}
-    .wardCell text{pointer-events:none;font-size:10px;fill:rgba(233,236,255,0.90);font-weight:900}
-    .selected rect{stroke:rgba(255,255,255,0.7)!important;stroke-width:2!important}
-    .meter{height:10px;border-radius:999px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);overflow:hidden}
-    .meter > div{height:100%}
-    .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .threeCol{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-    .kpi{font-weight:1000}
-    .kv{display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center}
-    .kv .key{color:var(--muted);font-size:12px}
-    .kv .val{font-variant-numeric:tabular-nums}
-    .hint{color:var(--muted);font-size:12px}
-    .btnSm{padding:6px 8px;font-size:12px;border-radius:10px}
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; }
+    header { padding: 14px 16px; border-bottom: 1px solid rgba(127,127,127,.35); display: flex; gap: 12px; align-items: baseline; }
+    header h1 { font-size: 16px; margin: 0; }
+    header .sub { opacity: .75; font-size: 12px; }
+    main { display: grid; grid-template-columns: 360px 1fr; gap: 0; min-height: calc(100vh - 54px); }
+    aside { border-right: 1px solid rgba(127,127,127,.35); padding: 14px 16px; overflow: auto; }
+    section { padding: 14px 16px; overflow: auto; }
+    .card { border: 1px solid rgba(127,127,127,.35); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .row > * { flex: 1 1 auto; }
+    .kpi { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .kpi .box { border: 1px solid rgba(127,127,127,.35); border-radius: 10px; padding: 10px; }
+    .box .lbl { font-size: 11px; opacity: .7; }
+    .box .val { font-size: 18px; font-weight: 700; }
+    .small { font-size: 12px; opacity: .85; }
+    .muted { opacity: .7; }
+    .danger { color: #b00020; }
+    .good { color: #0a7; }
+    button { cursor: pointer; border-radius: 10px; border: 1px solid rgba(127,127,127,.35); padding: 10px 12px; background: transparent; }
+    button:hover { filter: brightness(1.05); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    select, input { border-radius: 10px; border: 1px solid rgba(127,127,127,.35); padding: 8px 10px; background: transparent; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px 6px; border-bottom: 1px solid rgba(127,127,127,.25); font-size: 13px; text-align: left; }
+    th { font-size: 12px; opacity: .8; }
+    .tag { display: inline-block; border: 1px solid rgba(127,127,127,.35); border-radius: 999px; padding: 2px 8px; font-size: 11px; opacity: .85; }
+    .log { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; white-space: pre-wrap; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .hr { height: 1px; background: rgba(127,127,127,.35); margin: 12px 0; }
+    .pillrow { display:flex; gap:8px; flex-wrap: wrap; }
+    .right { text-align: right; }
+    @media (max-width: 980px) { main { grid-template-columns: 1fr; } aside { border-right: none; border-bottom: 1px solid rgba(127,127,127,.35);} }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>Ward Lords — Campaign Mode v0.3</h1>
-      <div class="sub">
-        Campaign-first prototype: detailed polling, social media, ward & council profiles, list + grouped views.
-        Weekly turns (10 weeks) → election night. Fictional council/wards/candidates.
-      </div>
-    </div>
-    <div class="row">
-      <div class="pill"><div class="k">Week</div><div class="v" id="week">—</div></div>
-      <div class="pill"><div class="k">Phase</div><div class="v" id="phase">Setup</div></div>
-      <div class="pill"><div class="k">Seats (Maj=16)</div><div class="v" id="projSeats">—</div></div>
-    </div>
-  </header>
+<header>
+  <h1>Ward Manager (UK) — Stats Prototype</h1>
+  <div class="sub">Single-ward local election • weekly turns • noisy polling • micro-targeting • leaflets • canvassing • GOTV</div>
+</header>
 
-  <div class="grid">
-    <!-- LEFT MAIN -->
+<main>
+  <aside>
     <div class="card">
-      <div class="row" style="justify-content:space-between">
-        <div class="row">
-          <button id="newBtn">New Campaign</button>
-          <button id="startBtn" disabled>Start (Week 1)</button>
-          <button id="nextBtn" disabled>Resolve Week</button>
-          <button id="electionBtn" disabled>Election Night</button>
+      <div class="row">
+        <div>
+          <div class="small muted">Ward</div>
+          <div style="font-weight:700" id="wardName">—</div>
+          <div class="small muted" id="wardMeta">—</div>
         </div>
-        <div class="row">
-          <span class="tag">Resource tradeoffs</span>
-          <span class="tag">Polling has error</span>
-          <span class="tag">Social can backfire</span>
+        <div class="right">
+          <div class="small muted">Week</div>
+          <div style="font-weight:700; font-size:18px" id="weekLabel">—</div>
+          <div class="small muted" id="phaseLabel">—</div>
         </div>
       </div>
-
       <div class="hr"></div>
-
-      <div class="row" style="gap:12px;align-items:flex-end;">
-        <div>
-          <div class="small">Play as</div>
-          <select id="playerParty">
-            <option value="CIV">Civic Union (CIV)</option>
-            <option value="LAB">Labour Alliance (LAB)</option>
-            <option value="GRN">Greens & Indies (GRN)</option>
-            <option value="CON">Community Cons. (CON)</option>
-          </select>
+      <div class="kpi">
+        <div class="box">
+          <div class="lbl">Money (£)</div>
+          <div class="val" id="kpiMoney">—</div>
+          <div class="small muted">Spend limits not enforced in this prototype</div>
         </div>
-        <div>
-          <div class="small">Difficulty</div>
-          <select id="difficulty">
-            <option value="0">Casual</option>
-            <option value="1" selected>Standard</option>
-            <option value="2">Hardcore</option>
-          </select>
+        <div class="box">
+          <div class="lbl">Vol. Hours</div>
+          <div class="val" id="kpiVol">—</div>
+          <div class="small muted">Used for doors & delivery</div>
         </div>
-        <div>
-          <div class="small">Campaign length</div>
-          <select id="weeks">
-            <option value="8">8 weeks</option>
-            <option value="10" selected>10 weeks</option>
-            <option value="12">12 weeks</option>
-          </select>
+        <div class="box">
+          <div class="lbl">Candidate Energy</div>
+          <div class="val" id="kpiEnergy">—</div>
+          <div class="small muted">Drops with events/press</div>
+        </div>
+        <div class="box">
+          <div class="lbl">Ethical Debt</div>
+          <div class="val" id="kpiEthics">—</div>
+          <div class="small muted">Increases exposure risk</div>
         </div>
       </div>
-
-      <div class="hr"></div>
-
-      <div class="tabs">
-        <div class="tab active" data-tab="dashboard">Dashboard</div>
-        <div class="tab" data-tab="wards">Wards (List)</div>
-        <div class="tab" data-tab="groups">Wards (Groups)</div>
-        <div class="tab" data-tab="polls">Polling</div>
-        <div class="tab" data-tab="social">Social Media</div>
-      </div>
-
-      <div id="tab_dashboard"></div>
-      <div id="tab_wards" style="display:none"></div>
-      <div id="tab_groups" style="display:none"></div>
-      <div id="tab_polls" style="display:none"></div>
-      <div id="tab_social" style="display:none"></div>
-
-      <div class="hr"></div>
-
-      <div class="small">Campaign Log</div>
-      <div class="log" id="log"></div>
     </div>
 
-    <!-- RIGHT INSPECTOR -->
     <div class="card">
-      <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div class="row">
         <div>
-          <div style="font-weight:1000;">Council Map (30 wards)</div>
-          <div class="small">Click a ward to open its profile. Winner shown after election.</div>
+          <div class="small muted">Issue Salience (Top 3)</div>
+          <div class="pillrow" id="topIssues">—</div>
         </div>
-        <div class="row">
-          <button id="toggleLabels" class="btnSm" disabled>Toggle Labels</button>
+      </div>
+      <div class="hr"></div>
+      <div class="small muted">Your baseline strengths</div>
+      <div class="grid2" id="candidateStats"></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <button id="btnPoll">Run Internal Poll (£250)</button>
+        <button id="btnNext">Advance Week ▶</button>
+      </div>
+      <div class="small muted" style="margin-top:8px">
+        Tip: pick a district + issue combo and repeat for a few weeks to see momentum and saturation effects.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="small muted">Event Feed</div>
+      <div class="log" id="eventLog">—</div>
+    </div>
+  </aside>
+
+  <section>
+    <div class="card">
+      <div class="row">
+        <div>
+          <div class="small muted">Action Planner (This Week)</div>
+          <div style="font-weight:700">Choose one primary action</div>
+        </div>
+        <div class="right">
+          <span class="tag" id="actionBudgetTag">Budget: —</span>
         </div>
       </div>
 
       <div class="hr"></div>
 
-      <div id="map"></div>
+      <div class="grid3">
+        <div>
+          <div class="small muted">Action</div>
+          <select id="selAction">
+            <option value="canvass">Door-knocking canvass</option>
+            <option value="leaflet">Leaflet drop</option>
+            <option value="social">Social media ads</option>
+            <option value="press">Local press / interview</option>
+            <option value="gotv">GOTV prep (late campaign)</option>
+          </select>
+          <div class="small muted" style="margin-top:8px">District</div>
+          <select id="selDistrict"></select>
+        </div>
+
+        <div>
+          <div class="small muted">Issue</div>
+          <select id="selIssue"></select>
+          <div class="small muted" style="margin-top:8px">Frame</div>
+          <select id="selFrame">
+            <option value="fairness">Fairness</option>
+            <option value="safety">Safety</option>
+            <option value="money">Cost of living / Council tax</option>
+            <option value="community">Community / pride</option>
+            <option value="competence">Competence</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="small muted">Tone</div>
+          <select id="selTone">
+            <option value="positive">Positive</option>
+            <option value="empathetic">Empathetic</option>
+            <option value="contrast">Contrast</option>
+            <option value="attack">Attack (risky)</option>
+          </select>
+          <div class="small muted" style="margin-top:8px">Intensity</div>
+          <input id="rngIntensity" type="range" min="1" max="5" value="3" />
+          <div class="small muted">1 = light, 5 = heavy saturation</div>
+        </div>
+      </div>
 
       <div class="hr"></div>
 
-      <div style="font-weight:1000;" id="inspectTitle">Ward Profile</div>
-      <div class="small" id="inspectBody">Click <b>New Campaign</b>, then click a ward.</div>
+      <div class="row">
+        <button id="btnDoAction">Execute Action</button>
+        <button id="btnResetWeek">Reset Week (no cost)</button>
+        <div class="right small muted" id="weekNotes">—</div>
+      </div>
     </div>
-  </div>
-</div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="row">
+          <div>
+            <div class="small muted">Polling (Latest)</div>
+            <div style="font-weight:700">Likely Voters — noisy</div>
+          </div>
+          <div class="right small muted" id="pollMeta">—</div>
+        </div>
+        <div class="hr"></div>
+        <table>
+          <thead>
+          <tr><th>Candidate</th><th class="right">%</th><th>Notes</th></tr>
+          </thead>
+          <tbody id="pollTable"></tbody>
+        </table>
+        <div class="small muted" id="pollCaveat"></div>
+      </div>
+
+      <div class="card">
+        <div class="small muted">District Dashboard</div>
+        <div style="font-weight:700" id="districtTitle">—</div>
+        <div class="hr"></div>
+        <table>
+          <tbody id="districtStats"></tbody>
+        </table>
+        <div class="hr"></div>
+        <div class="small muted">Micro history (your activity & saturation)</div>
+        <div class="log" id="districtHistory">—</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="small muted">All Districts Snapshot</div>
+      <div class="hr"></div>
+      <table>
+        <thead>
+        <tr>
+          <th>District</th>
+          <th class="right">Voters</th>
+          <th class="right">Turnout</th>
+          <th class="right">You</th>
+          <th class="right">Con</th>
+          <th class="right">Lab</th>
+          <th class="right">Ind</th>
+          <th>Top Issue</th>
+        </tr>
+        </thead>
+        <tbody id="allDistricts"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
 
 <script>
-(() => {
-  // ---------- helpers ----------
-  const el = (id)=>document.getElementById(id);
-  const rand=(a,b)=>Math.random()*(b-a)+a;
-  const randi=(a,b)=>Math.floor(rand(a,b+1));
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const pick=(arr)=>arr[Math.floor(Math.random()*arr.length)];
-  const sum=(arr)=>arr.reduce((a,b)=>a+b,0);
-  const avg=(arr)=>arr.length?sum(arr)/arr.length:0;
+/**
+ * WARD MANAGER (UK) — Minimal-but-deep prototype in one HTML file.
+ * - One ward with 12 districts
+ * - Voters represented as district aggregates + segments
+ * - Weekly actions: canvass / leaflet / social / press / GOTV
+ * - Messaging variables: issue + frame + tone + intensity
+ * - Effects: persuasion + turnout + trust + fatigue/saturation + backlash risk
+ * - Polling: noisy likely-voter estimate
+ *
+ * This is a prototype foundation; you can expand data, UI, and AI opponents.
+ */
 
-  // ---------- parties ----------
-  const PARTIES = [
-    { id:"CIV", name:"Civic Union",       css:"good", map:"civ" },
-    { id:"LAB", name:"Labour Alliance",   css:"warn", map:"lab" },
-    { id:"GRN", name:"Greens & Indies",   css:"good", map:"grn" },
-    { id:"CON", name:"Community Cons.",   css:"bad",  map:"con" },
+/* ---------- Utilities ---------- */
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const rnd = (a=0, b=1) => a + Math.random() * (b-a);
+const irnd = (a, b) => Math.floor(rnd(a, b+1));
+const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
+function fmt(n){ return n.toLocaleString('en-GB'); }
+function pct(n){ return `${(n*100).toFixed(1)}%`; }
+
+/* ---------- Game Data ---------- */
+const GAME = {
+  ward: {
+    name: "Greybridge North",
+    council: "Unitary Authority (England)",
+    electorate: 9180,
+    population: 12400,
+    baselineTurnout: 0.48,
+  },
+  week: 1,
+  totalWeeks: 24, // shorter campaign for prototype; extend to 52 easily
+  phase: "Campaign",
+  resources: {
+    money: 6200,
+    volHours: 110,
+    energy: 85,
+    ethicalDebt: 0,
+  },
+  candidate: {
+    name: "Elliot Price (You)",
+    party: "Greenbridge Residents",
+    stats: { charisma: 13, discipline: 12, authenticity: 15, policy: 11, debate: 10, localCred: 14, stamina: 12, gaffeRes: 11 },
+    narrative: { awareness: 0.28, trust: 0.52 } // ward-level baseline
+  },
+  opponents: [
+    { name: "Margaret Holloway", party: "Conservative", style: "Incumbent Defender", base: { awareness: 0.68, trust: 0.54 } },
+    { name: "Liam Carter", party: "Labour", style: "Ground-Game Maximalist", base: { awareness: 0.46, trust: 0.49 } },
+    { name: "Nadia Rahman", party: "Independent", style: "Local Issue Champion", base: { awareness: 0.33, trust: 0.50 } },
+  ],
+  issues: [
+    { key:"asb", name:"Anti-social behaviour", salience: 78, polarity: 0.20 },
+    { key:"parking", name:"Parking & permits", salience: 72, polarity: 0.35 },
+    { key:"cTax", name:"Council tax & value", salience: 64, polarity: 0.25 },
+    { key:"bins", name:"Bin collections", salience: 56, polarity: 0.10 },
+    { key:"planning", name:"Housing & development", salience: 60, polarity: 0.45 },
+    { key:"roads", name:"Potholes & roads", salience: 52, polarity: 0.15 },
+    { key:"youth", name:"Youth services", salience: 44, polarity: 0.30 },
+  ],
+  // Districts store "true" latent support & turnout (hidden), plus saturation and contact history
+  districts: []
+};
+
+/* ---------- District Generation ---------- */
+function makeDistricts(){
+  const templates = [
+    { name:"Riverside Estate", voters:1050, baseTurnout:0.36, skew:"working", top:"asb" },
+    { name:"Old Greybridge", voters:740, baseTurnout:0.62, skew:"older", top:"cTax" },
+    { name:"Kingsway Newbuilds", voters:1300, baseTurnout:0.44, skew:"young", top:"parking" },
+    { name:"St. Mark’s Village", voters:620, baseTurnout:0.64, skew:"conservative", top:"planning" },
+    { name:"Industrial Crescent", voters:890, baseTurnout:0.40, skew:"union", top:"roads" },
+    { name:"Greybridge High Street", voters:520, baseTurnout:0.50, skew:"mixed", top:"bins" },
+    { name:"Willow Park", voters:800, baseTurnout:0.52, skew:"family", top:"asb" },
+    { name:"The Gables", voters:610, baseTurnout:0.60, skew:"affluent", top:"cTax" },
+    { name:"Elm Terrace", voters:760, baseTurnout:0.48, skew:"renters", top:"parking" },
+    { name:"Harbour View", voters:430, baseTurnout:0.58, skew:"older", top:"roads" },
+    { name:"Northgate Flats", voters:860, baseTurnout:0.33, skew:"renters", top:"asb" },
+    { name:"Meadowfield", voters:600, baseTurnout:0.55, skew:"family", top:"planning" },
   ];
-  const partyName = (id)=>PARTIES.find(p=>p.id===id)?.name||id;
-  const partyCss  = (id)=>PARTIES.find(p=>p.id===id)?.css||"";
-  const partyFill = (id, a)=>{
-    switch(id){
-      case "CIV": return `rgba(102,255,204,${a})`;
-      case "LAB": return `rgba(255,211,106,${a})`;
-      case "GRN": return `rgba(102,200,255,${a})`;
-      case "CON": return `rgba(255,90,122,${a})`;
-      default: return `rgba(255,255,255,${a})`;
+
+  // Baseline "true" vote shares per district (latent). Must sum ~1
+  // We'll generate around a ward-wide baseline with district-specific noise.
+  const wardBase = { you: 0.27, con: 0.33, lab: 0.30, ind: 0.10 };
+
+  GAME.districts = templates.map(t => {
+    // district lean by "skew"
+    const delta = { you:0, con:0, lab:0, ind:0 };
+    switch(t.skew){
+      case "older": delta.con += 0.03; delta.you -= 0.01; delta.lab -= 0.01; break;
+      case "affluent": delta.con += 0.05; delta.you -= 0.01; delta.lab -= 0.03; break;
+      case "working": delta.lab += 0.04; delta.con -= 0.02; delta.you -= 0.01; break;
+      case "union": delta.lab += 0.05; delta.con -= 0.03; break;
+      case "young": delta.you += 0.03; delta.con -= 0.02; delta.ind += 0.01; break;
+      case "renters": delta.you += 0.02; delta.lab += 0.02; delta.con -= 0.03; break;
+      case "conservative": delta.con += 0.06; delta.lab -= 0.03; delta.you -= 0.02; break;
+      case "family": delta.you += 0.02; delta.con += 0.01; delta.lab -= 0.02; break;
+      default: break;
     }
+
+    // Apply noise
+    const noise = () => rnd(-0.015, 0.015);
+
+    let you = wardBase.you + delta.you + noise();
+    let con = wardBase.con + delta.con + noise();
+    let lab = wardBase.lab + delta.lab + noise();
+    let ind = wardBase.ind + delta.ind + noise();
+
+    // Normalise to sum 1, ensure bounds
+    const raw = [you, con, lab, ind].map(v => clamp(v, 0.03, 0.85));
+    const sum = raw.reduce((a,b)=>a+b,0);
+    [you, con, lab, ind] = raw.map(v => v/sum);
+
+    return {
+      name: t.name,
+      voters: t.voters,
+      skew: t.skew,
+      topIssueKey: t.top,
+      latent: {
+        support: { you, con, lab, ind }, // hidden true
+        turnout: clamp(t.baseTurnout + rnd(-0.03,0.03), 0.22, 0.75), // hidden true
+        awarenessYou: clamp(GAME.candidate.narrative.awareness + rnd(-0.06,0.06), 0.10, 0.80),
+        trustYou: clamp(GAME.candidate.narrative.trust + rnd(-0.08,0.08), 0.25, 0.80),
+      },
+      saturation: {
+        // tracks fatigue per channel per issue
+        canvass: {}, leaflet: {}, social: {}, press: {}, gotv: {}
+      },
+      contact: {
+        doors: 0, leaflets: 0, socialImpressions: 0, pressHits: 0, gotvTouches: 0
+      },
+      history: []
+    };
+  });
+}
+
+/* ---------- Mechanics ---------- */
+
+function issueByKey(key){ return GAME.issues.find(i=>i.key===key); }
+
+function top3Issues(){
+  return [...GAME.issues].sort((a,b)=>b.salience-a.salience).slice(0,3);
+}
+
+// Impact factors by frame vs issue (soft mapping)
+const FRAME_FIT = {
+  fairness: { cTax: 0.9, parking: 0.75, asb: 0.6, bins: 0.7, planning: 0.65, roads: 0.7, youth: 0.85 },
+  safety: { asb: 0.95, parking: 0.55, cTax: 0.45, bins: 0.55, planning: 0.5, roads: 0.6, youth: 0.5 },
+  money: { cTax: 0.95, parking: 0.7, asb: 0.55, bins: 0.65, planning: 0.6, roads: 0.7, youth: 0.55 },
+  community: { bins: 0.75, roads: 0.7, youth: 0.8, asb: 0.75, planning: 0.65, parking: 0.6, cTax: 0.55 },
+  competence: { bins: 0.8, roads: 0.85, parking: 0.7, cTax: 0.75, asb: 0.7, planning: 0.75, youth: 0.65 },
+};
+
+const TONE_RISK = { positive: 0.02, empathetic: 0.03, contrast: 0.05, attack: 0.11 };
+const TONE_TRUST = { positive: 0.015, empathetic: 0.020, contrast: 0.005, attack: -0.018 };
+
+function getSat(d, channel, issueKey){
+  return d.saturation[channel][issueKey] ?? 0;
+}
+function addSat(d, channel, issueKey, amount){
+  d.saturation[channel][issueKey] = clamp(getSat(d, channel, issueKey) + amount, 0, 1.6);
+}
+function decaySaturation(){
+  // weekly decay
+  for(const d of GAME.districts){
+    for(const ch of ["canvass","leaflet","social","press","gotv"]){
+      for(const key of Object.keys(d.saturation[ch])){
+        d.saturation[ch][key] = clamp(d.saturation[ch][key] * 0.78, 0, 2);
+      }
+    }
+  }
+}
+
+function likelyVoterWeight(turnout){
+  // Convert turnout probability to a weight for likely-voter model.
+  // Higher turnout districts matter more in LV.
+  return 0.5 + turnout; // 0.7..1.25-ish
+}
+
+function computeWardTotals(){
+  // Combine districts into ward-wide latent (ground truth).
+  let totalW = 0;
+  const totals = { you:0, con:0, lab:0, ind:0 };
+  let turnout = 0;
+
+  for(const d of GAME.districts){
+    const w = d.voters;
+    totalW += w;
+    for(const k of Object.keys(totals)) totals[k] += d.latent.support[k] * w;
+    turnout += d.latent.turnout * w;
+  }
+  for(const k of Object.keys(totals)) totals[k] /= totalW;
+  turnout /= totalW;
+  return { support: totals, turnout };
+}
+
+function computeLikelyVoterTotals(){
+  let totalW = 0;
+  const totals = { you:0, con:0, lab:0, ind:0 };
+  let turnout = 0;
+
+  for(const d of GAME.districts){
+    const w = d.voters * likelyVoterWeight(d.latent.turnout);
+    totalW += w;
+    for(const k of Object.keys(totals)) totals[k] += d.latent.support[k] * w;
+    turnout += d.latent.turnout * w;
+  }
+  for(const k of Object.keys(totals)) totals[k] /= totalW;
+  turnout /= totalW;
+  return { support: totals, turnout };
+}
+
+function noisyPollFromTruth(truth){
+  // Add sampling error + house effects.
+  const n = irnd(420, 820);
+  const moE = 1.96 * Math.sqrt(0.25 / n); // rough max MoE for proportions
+  const house = { you: rnd(-0.01,0.01), con: rnd(-0.012,0.012), lab: rnd(-0.012,0.012), ind: rnd(-0.008,0.008) };
+
+  let vals = { ...truth.support };
+  // Apply noise per candidate; keep sum 1 via renormalisation
+  for(const k of Object.keys(vals)){
+    vals[k] += rnd(-moE, moE) + house[k];
+    vals[k] = clamp(vals[k], 0.01, 0.85);
+  }
+  const sum = Object.values(vals).reduce((a,b)=>a+b,0);
+  for(const k of Object.keys(vals)) vals[k] /= sum;
+
+  // Turnout estimate with noise
+  let t = truth.turnout + rnd(-0.03,0.03);
+  t = clamp(t, 0.25, 0.70);
+
+  return { n, moE, support: vals, turnout: t };
+}
+
+function applyAction({ action, districtName, issueKey, frame, tone, intensity }){
+  const d = GAME.districts.find(x=>x.name===districtName);
+  const issue = issueByKey(issueKey);
+  const stats = GAME.candidate.stats;
+
+  // Costs & resource requirements
+  const costs = {
+    canvass: { money: 20, vol: 18*intensity, energy: 6+intensity },
+    leaflet: { money: 120*intensity, vol: 10*intensity, energy: 2+Math.floor(intensity/2) },
+    social: { money: 90*intensity, vol: 2, energy: 2 },
+    press: { money: 0, vol: 0, energy: 10+intensity },
+    gotv: { money: 40, vol: 16*intensity, energy: 7+intensity },
+  }[action];
+
+  // Late-game gating for GOTV
+  if(action === "gotv" && GAME.week < Math.floor(GAME.totalWeeks*0.75)){
+    return { ok:false, msg:"GOTV prep unlocks in the late campaign (final quarter)." };
+  }
+
+  // Check resources
+  if(GAME.resources.money < costs.money) return { ok:false, msg:"Not enough money." };
+  if(GAME.resources.volHours < costs.vol) return { ok:false, msg:"Not enough volunteer hours." };
+  if(GAME.resources.energy < costs.energy) return { ok:false, msg:"Candidate too exhausted." };
+
+  // Spend resources
+  GAME.resources.money -= costs.money;
+  GAME.resources.volHours -= costs.vol;
+  GAME.resources.energy -= costs.energy;
+
+  // Compute effectiveness
+  const sal = issue.salience / 100;
+  const fit = (FRAME_FIT[frame]?.[issueKey] ?? 0.6);
+  const toneTrust = TONE_TRUST[tone] ?? 0;
+  const toneRisk = TONE_RISK[tone] ?? 0.04;
+
+  // Candidate quality multipliers
+  const deliveryQ =
+    (0.45 +
+      0.02*stats.charisma +
+      0.015*stats.authenticity +
+      0.01*stats.policy) / 1.0;
+
+  // Channel strengths
+  const channelBase = {
+    canvass: 0.55,
+    leaflet: 0.40,
+    social: 0.36,
+    press: 0.30,
+    gotv: 0.50
+  }[action];
+
+  // Saturation dampening
+  const sat = getSat(d, action, issueKey);
+  const satDamp = 1 / (1 + 1.2*sat); // diminishing returns
+
+  // Localisation bonus if using district's top issue
+  const localBonus = (d.topIssueKey === issueKey) ? 1.18 : 1.0;
+
+  // Intensity scales both impact and backlash
+  const intensityScale = 0.55 + 0.18*intensity; // 0.73..1.45
+
+  // Base persuasion effect magnitude
+  let impact = channelBase * sal * fit * deliveryQ * satDamp * localBonus * intensityScale;
+
+  // Convert to vote share movement (small, realistic weekly nudges)
+  // We shift from opponents to you, and potentially shift turnout
+  const maxShift = 0.010 * impact; // up to ~1 point in very good conditions
+  const shift = clamp(rnd(0.35,1.0)*maxShift, 0, 0.012);
+
+  // Turnout movement for GOTV and some empathetic canvass
+  let turnoutBoost = 0;
+  if(action === "gotv") turnoutBoost = clamp(0.004*impact*intensity, 0, 0.02);
+  if(action === "canvass" && tone === "empathetic") turnoutBoost = clamp(0.0025*impact*intensity, 0, 0.012);
+
+  // Trust/awareness changes (small)
+  const trustDelta = toneTrust * (0.6 + 0.1*intensity) * satDamp * localBonus;
+  const awarenessDelta = clamp(0.01 * channelBase * (0.8 + 0.08*intensity) * satDamp, 0, 0.02);
+
+  // Backlash / scandal risk
+  const backlashP = clamp((toneRisk + 0.03*(intensity-1)) * (0.6 + 0.6*sat), 0, 0.35);
+  const backlashRoll = Math.random() < backlashP;
+
+  // Ethical debt: attack / dark-ish behaviour
+  if(action === "social" && tone !== "positive") GAME.resources.ethicalDebt += 0.6 * intensity;
+  if(tone === "attack") GAME.resources.ethicalDebt += 0.9 * intensity;
+
+  // Apply persuasion: move vote share from strongest opponent in this district
+  // (you steal mostly from nearest competitor; some from incumbent)
+  const s = d.latent.support;
+  const oppOrder = [
+    { k:"con", v:s.con },
+    { k:"lab", v:s.lab },
+    { k:"ind", v:s.ind },
+  ].sort((a,b)=>b.v-a.v);
+  const takeFrom = oppOrder[0].k;
+
+  const actualShift = backlashRoll ? shift * 0.25 : shift; // backlash mutes persuasion
+  s.you = clamp(s.you + actualShift, 0.01, 0.95);
+  s[takeFrom] = clamp(s[takeFrom] - actualShift*0.85, 0.01, 0.95);
+  // distribute remainder across others a bit
+  const rem = actualShift*0.15;
+  const other = ["con","lab","ind"].filter(k=>k!==takeFrom);
+  s[other[0]] = clamp(s[other[0]] - rem*0.6, 0.01, 0.95);
+  s[other[1]] = clamp(s[other[1]] - rem*0.4, 0.01, 0.95);
+
+  // Renormalise
+  const sum = s.you + s.con + s.lab + s.ind;
+  s.you/=sum; s.con/=sum; s.lab/=sum; s.ind/=sum;
+
+  // Apply turnout
+  d.latent.turnout = clamp(d.latent.turnout + turnoutBoost, 0.20, 0.78);
+
+  // Apply awareness & trust (district-level)
+  d.latent.awarenessYou = clamp(d.latent.awarenessYou + awarenessDelta, 0.05, 0.95);
+  d.latent.trustYou = clamp(d.latent.trustYou + trustDelta, 0.15, 0.90);
+
+  // Add saturation
+  addSat(d, action, issueKey, 0.22*intensity);
+
+  // Update contact counters (for display)
+  if(action==="canvass") d.contact.doors += Math.floor(50*intensity*satDamp);
+  if(action==="leaflet") d.contact.leaflets += Math.floor(220*intensity*satDamp);
+  if(action==="social") d.contact.socialImpressions += Math.floor(600*intensity*satDamp);
+  if(action==="press") d.contact.pressHits += 1;
+  if(action==="gotv") d.contact.gotvTouches += Math.floor(80*intensity*satDamp);
+
+  const summary = {
+    ok:true,
+    shift: actualShift,
+    turnoutBoost,
+    trustDelta,
+    awarenessDelta,
+    backlash: backlashRoll,
+    backlashP,
+    impact,
+    satBefore: sat
   };
 
-  // ---------- names ----------
-  const FIRST=["Aisha","Ben","Clare","Daniel","Elena","Farah","Gareth","Holly","Imran","Jade","Kiran","Lewis","Mina","Noah","Olivia","Priya","Quinn","Ravi","Sam","Tariq","Uma","Violet","Will","Xavier","Yasmin","Zoe","Harriet","Mason","Layla","Finley","Amir","Sofia","Callum","Nadia","Reece","Sana","Elliot","Leah","Hassan","Amelia"];
-  const LAST=["Patel","Khan","Smith","Jones","Taylor","Brown","Singh","Ahmed","Williams","Johnson","Murphy","Evans","Hughes","Clarke","Wright","Walker","Morris","Davies","Cooper","Ward","Hall","Harris","Bennett","Fisher","Shah","Ali","Begum","Lewis","Moore","Young","Scott","Adams","Reid","Price","Harrison","Campbell","Barnes","Kelly","Stewart","Cole"];
-
-  const WARD_PREFIX=["North","South","East","West","Upper","Lower","Old","New","Riverside","Hill","Park","Lakeside","Meadow","Harbour","Market","Cathedral","Station","Forest","Brook","Canal","Crescent","Oak","Birch","Kings","Queens","St.","Abbey","Manor","Grove","Heath"];
-  const WARD_CORE=["Ashford","Brindle","Claymoor","Dunwick","Eversham","Foxglove","Greystone","Harrowgate","Ivydale","Juniper","Kestrel","Langford","Marlowe","Nightingale","Orchard","Pemberton","Quarrybank","Rosebridge","Stonehaven","Thornbury","Uplands","Valemere","Willowfield","Yewton","Briar","Caldwell","Fairview","Rookery","Sableton","Wrenford","Hatherleigh","Crownford","Linton","Wheatley","Belltown"];
-  const WARD_SUFFIX=["Central","Heights","Green","Quays","Vale","Ward","End","Common","Fields","Cross","Park","Rise","Side","Hollow","Point","Gate","Meadows","Town","View"];
-
-  const ISSUES=[
-    "Bins & street cleaning","Potholes & transport","High street vitality",
-    "Planning & housing","Anti-social behaviour","Flooding & resilience",
-    "Youth services","Care services","Council tax","Green spaces"
-  ];
-
-  const SEGMENTS=["Base","Persuadable","Soft Opp.","Non-voter"];
-
-  // ---------- state ----------
-  let S=null;
-  let selectedWardId=null;
-  let showLabels=true;
-
-  // ---------- log ----------
-  function log(msg){
-    const box=el("log");
-    box.textContent += msg + "\n";
-    box.scrollTop=box.scrollHeight;
-  }
-  function setPhase(p){ el("phase").textContent=p; }
-  function setWeek(w){ el("week").textContent=w; }
-
-  // ---------- generation ----------
-  function uniq(set, gen){
-    let v=gen(), tries=0;
-    while(set.has(v) && tries<500){ v=gen(); tries++; }
-    set.add(v); return v;
-  }
-  function genWardNames(){
-    const used=new Set();
-    const wards=[];
-    for(let i=1;i<=30;i++){
-      const name=uniq(used, ()=>{
-        const parts=[];
-        if(Math.random()<0.55) parts.push(pick(WARD_PREFIX));
-        parts.push(pick(WARD_CORE));
-        if(Math.random()<0.55) parts.push(pick(WARD_SUFFIX));
-        return parts.join(" ");
-      });
-      wards.push({id:i,name});
-    }
-    return wards;
-  }
-  function genPersonName(used){
-    return uniq(used, ()=>`${pick(FIRST)} ${pick(LAST)}`);
-  }
-
-  function genWards(){
-    const named=genWardNames();
-    const leans=["CIV","LAB","GRN","CON"];
-    const wards=[];
-    for(let i=0;i<30;i++){
-      const lean=pick(leans);
-      const strength=pick([6,8,10,12,14,16,18]);     // baseline lean lead points
-      const volatility=pick([3,4,5,6,7,8]);          // week-to-week uncertainty
-      const turnoutBase=pick([28,32,36,40,44,48,52,56]);
-      const digital=pick([0.25,0.35,0.45,0.55,0.65,0.75]); // how effective social is
-      const salience=pick(ISSUES);
-
-      // segments: base/persuadable/soft opp/non-voter as proportions
-      const persu=clamp(rand(0.18,0.30),0.12,0.35);
-      const nonv =clamp(rand(0.12,0.26),0.08,0.32);
-      const soft =clamp(rand(0.12,0.22),0.08,0.28);
-      const base =clamp(1 - (persu+nonv+soft),0.30,0.55);
-
-      wards.push({
-        id:named[i].id,
-        name:named[i].name,
-        issue:salience,
-        lean, strength, volatility,
-        turnoutBase, turnoutNow:turnoutBase,
-        digital, // 0..1
-        // campaign state
-        targetTier:"B", // A/B/C + None
-        canvass:0, // % coverage
-        awareness:0.45 + rand(-0.06,0.06), // 0..1
-        // true support (hidden) and estimated support (visible to player)
-        true:{CIV:0,LAB:0,GRN:0,CON:0},
-        est:{CIV:0,LAB:0,GRN:0,CON:0},
-        estSigma: 6.5, // points std dev; reduced by canvassing/polling
-        // segments
-        seg:{Base:base, Persuadable:persu, "Soft Opp.":soft, "Non-voter":nonv},
-        winner:null,
-        // weekly planned allocations (set by player)
-        plan:{doors:0, phones:0, leaflets:0, visit:0, social:0}
-      });
-    }
-    // seed ward “true” support from lean+strength
-    for(const w of wards){
-      const base={CIV:25,LAB:25,GRN:25,CON:25};
-      base[w.lean]+=w.strength;
-      // normalize
-      const t=sum(Object.values(base));
-      for(const p of Object.keys(base)) w.true[p]=base[p]/t*100;
-
-      // estimated starts noisy
-      for(const p of Object.keys(base)) w.est[p]=clamp(w.true[p]+rand(-7,7),5,70);
-      renorm100(w.est);
-    }
-    return wards;
-  }
-
-  function renorm100(obj){
-    const t=sum(Object.values(obj));
-    for(const k of Object.keys(obj)) obj[k]=obj[k]/t*100;
-  }
-
-  function genCandidates(wards){
-    const used=new Set();
-    // one candidate per party per ward (light model: only player candidate is “managed” in this prototype)
-    const cand=[];
-    for(const w of wards){
-      const p=w.lean; // incumbent party candidate stronger in lean wards
-      // we store “candidate strength” for player party and main rival (simple)
-      cand.push({
-        wardId:w.id,
-        // candidate quality in [0..100]
-        quality:{
-          CIV: clamp(Math.round(rand(35,75) + (w.lean==="CIV"?10:0)), 20, 95),
-          LAB: clamp(Math.round(rand(35,75) + (w.lean==="LAB"?10:0)), 20, 95),
-          GRN: clamp(Math.round(rand(30,70) + (w.lean==="GRN"?10:0)), 20, 92),
-          CON: clamp(Math.round(rand(35,75) + (w.lean==="CON"?10:0)), 20, 95),
-        },
-        // names for flavour (optional list in ward profile)
-        names:{
-          CIV: genPersonName(used),
-          LAB: genPersonName(used),
-          GRN: genPersonName(used),
-          CON: genPersonName(used),
-        }
-      });
-    }
-    return cand;
-  }
-
-  // ---------- polling ----------
-  function councilTrueSupport(){
-    // average across wards weighted by turnoutNow (proxy)
-    const totals={CIV:0,LAB:0,GRN:0,CON:0};
-    const wts=S.wards.map(w=>w.turnoutNow);
-    const wtSum=sum(wts);
-    for(const w of S.wards){
-      const wt=w.turnoutNow/wtSum;
-      for(const p of Object.keys(totals)) totals[p]+=w.true[p]*wt;
-    }
-    return totals;
-  }
-
-  function councilEstimatedSupport(){
-    const totals={CIV:0,LAB:0,GRN:0,CON:0};
-    const wts=S.wards.map(w=>w.turnoutNow);
-    const wtSum=sum(wts);
-    for(const w of S.wards){
-      const wt=w.turnoutNow/wtSum;
-      for(const p of Object.keys(totals)) totals[p]+=w.est[p]*wt;
-    }
-    return totals;
-  }
-
-  function drawPollFromTruth(truth, sampleSize, house=0){
-    // sampleSize: bigger -> lower noise. house shift adds small bias
-    const moe = 1.96*Math.sqrt(0.25/sampleSize)*100; // crude MoE worst-case
-    const out={};
-    // correlated-ish noise: shared swing + per-party noise
-    const swing = rand(-moe*0.35, moe*0.35) + house;
-    for(const p of Object.keys(truth)){
-      const n = rand(-moe, moe)*0.55 + swing*0.35;
-      out[p]=clamp(truth[p] + n, 1, 80);
-    }
-    renorm100(out);
-    return { out, moe };
-  }
-
-  // ---------- campaign mechanics ----------
-  function resolveWeek(){
-    if(S.phase!=="Campaign") return;
-    if(S.week > S.totalWeeks){ return; }
-
-    log(`\n=== Week ${S.week} ===`);
-
-    // 1) AI opponent activity (simple): they push in marginal wards + defend their leans
-    aiPlanWeek();
-
-    // 2) Apply player allocations to wards (effects)
-    applyPlans();
-
-    // 3) Random campaign event (some hit social, some wards)
-    applyEvent();
-
-    // 4) Update estimates (canvass reduces sigma; tracker poll updates council polling)
-    updateEstimatesAndPolling();
-
-    // 5) Clear plans
-    for(const w of S.wards){
-      w.plan={doors:0, phones:0, leaflets:0, visit:0, social:0};
-    }
-
-    // 6) Spend resources reset-ish for next week
-    S.resources.volunteers = S.resources.volunteersMax;
-    S.resources.candTime   = S.resources.candTimeMax;
-    S.resources.cash       = clamp(S.resources.cash + S.resources.cashIncome, 0, 9999);
-    S.resources.socialCap  = S.resources.socialCapMax;
-
-    // 7) advance
-    S.week += 1;
-    if(S.week > S.totalWeeks){
-      el("nextBtn").disabled=true;
-      el("electionBtn").disabled=false;
-      setPhase("Election Ready");
-      setWeek(`${S.totalWeeks} (done)`);
-      log("\nCampaign period ended. Prepare for election night.");
-    } else {
-      setWeek(String(S.week));
-    }
-
-    renderAll();
-  }
-
-  function aiPlanWeek(){
-    // For each ward, opponents add a small “counterforce” if it’s marginal.
-    // This shifts true support slightly (real world), and can also raise turnout.
-    const player=S.player;
-    for(const w of S.wards){
-      const margin = estMargin(w, player); // using estimate as what AI "thinks"
-      const tight = Math.abs(margin) < 4.5;
-      const defend = w.lean !== player && w.lean === leadingParty(w.est);
-      const attack = w.lean !== player && Math.abs(margin) < 6.5;
-
-      const pressure = (tight? 1.0 : attack?0.6 : defend?0.5 : 0.2);
-      const diff = S.difficulty;
-
-      // AI effect slightly increases their leading party in that ward
-      const aiParty = w.lean; // simplified opponent focus
-      const delta = (0.10 + 0.07*diff) * pressure; // points
-      w.true[aiParty] = clamp(w.true[aiParty] + delta, 1, 90);
-
-      // small backlash vs them if player is running very positive social
-      if(S.social.tone==="Positive" && Math.random()<0.12){
-        w.true[player] = clamp(w.true[player] + 0.05, 1, 90);
-      }
-
-      renorm100(w.true);
-    }
-  }
-
-  function applyPlans(){
-    const player=S.player;
-    for(const w of S.wards){
-      const plan=w.plan;
-
-      // effects are small per week but compound; persuasion pool limits max change
-      const persuPool = w.seg["Persuadable"]*100; // pseudo-cap
-      const baseEffect = 0.10 + w.volatility*0.01;
-
-      // Door knocking: best persuasion + best data, uses volunteers
-      if(plan.doors>0){
-        const eff = baseEffect * (plan.doors/10) * (0.9 + w.awareness);
-        shiftSupport(w, player, eff, persuPool);
-        w.canvass = clamp(w.canvass + plan.doors*0.9, 0, 100);
-        w.awareness = clamp(w.awareness + plan.doors*0.002, 0, 1);
-        w.estSigma = clamp(w.estSigma - plan.doors*0.03, 2.0, 9.5);
-      }
-
-      // Phones: medium persuasion + data
-      if(plan.phones>0){
-        const eff = baseEffect * (plan.phones/14) * 0.75;
-        shiftSupport(w, player, eff, persuPool);
-        w.canvass = clamp(w.canvass + plan.phones*0.5, 0, 100);
-        w.estSigma = clamp(w.estSigma - plan.phones*0.018, 2.0, 9.5);
-      }
-
-      // Leaflets: awareness + turnout cue, weak persuasion
-      if(plan.leaflets>0){
-        w.awareness = clamp(w.awareness + plan.leaflets*0.003, 0, 1);
-        w.turnoutNow = clamp(w.turnoutNow + plan.leaflets*0.02, 20, 80);
-        const eff = baseEffect * (plan.leaflets/25) * 0.35;
-        shiftSupport(w, player, eff, persuPool*0.6);
-      }
-
-      // Candidate visit: spike + risk of gaffe (increases volatility/uncertainty this week)
-      if(plan.visit>0){
-        const candQ = candidateQuality(w.id, player);
-        const eff = baseEffect * (plan.visit/1) * (candQ/85);
-        shiftSupport(w, player, eff, persuPool);
-        w.awareness = clamp(w.awareness + 0.04, 0, 1);
-        // gaffe risk
-        const gaffe = Math.random() < (0.08 + (80-candQ)/400);
-        if(gaffe){
-          log(`⚠️ Gaffe in ${w.name}: candidate visit clip lands badly.`);
-          w.true[player] = clamp(w.true[player] - 0.35, 1, 90);
-          renorm100(w.true);
-          w.estSigma = clamp(w.estSigma + 0.8, 2.0, 12.0);
-        }
-      }
-
-      // Social ads (ward-level): strong where digital engagement is high; can backfire if tone is negative
-      if(plan.social>0){
-        const eff = baseEffect * (plan.social/20) * (0.6 + w.digital);
-        shiftSupport(w, player, eff, persuPool*0.9);
-        w.awareness = clamp(w.awareness + plan.social*0.004*(0.5+w.digital), 0, 1);
-        if(S.social.tone==="Negative" && Math.random() < (0.06 + plan.social*0.002)){
-          // backlash: opponent turnout rises
-          w.turnoutNow = clamp(w.turnoutNow + 0.6, 20, 80);
-        }
-      }
-
-      // Targeting tier gives small “focus bonus” if you invest
-      if(w.targetTier==="A" && (plan.doors+plan.phones+plan.leaflets+plan.social+plan.visit)>0){
-        w.true[player]=clamp(w.true[player]+0.05,1,90); renorm100(w.true);
-      }
-    }
-  }
-
-  function shiftSupport(w, player, pts, cap){
-    // pts is in percentage points of vote share, but limit by persuadable pool
-    const maxShift = cap*0.03; // cap prevents absurd movement
-    const d = clamp(pts, -maxShift, maxShift);
-    w.true[player] = clamp(w.true[player] + d, 1, 90);
-    // take from current leading opponent (not player)
-    const opp = leadingParty({...w.true, [player]: -1}); // hack: get non-player leader
-    if(opp && opp!==player){
-      w.true[opp] = clamp(w.true[opp] - d, 1, 90);
-    }
-    renorm100(w.true);
-  }
-
-  function leadingParty(dist){
-    let best=null, bestV=-1;
-    for(const [k,v] of Object.entries(dist)){
-      if(v>bestV){ bestV=v; best=k; }
-    }
-    return best;
-  }
-
-  function estMargin(w, player){
-    const lead = leadingParty(w.est);
-    const leadV = w.est[lead];
-    const pV = w.est[player];
-    // margin positive means player leads
-    return pV - (lead===player ? secondPlace(w.est, player).v : leadV);
-  }
-  function secondPlace(dist, exclude){
-    let best={k:null,v:-1};
-    for(const [k,v] of Object.entries(dist)){
-      if(k===exclude) continue;
-      if(v>best.v) best={k,v};
-    }
-    return best;
-  }
-
-  function candidateQuality(wardId, party){
-    const row = S.candidates.find(x=>x.wardId===wardId);
-    return row?.quality?.[party] ?? 55;
-  }
-
-  function applyEvent(){
-    const player=S.player;
-    const events=[
-      { t:"Local paper runs a piece on service delays.", fx:()=>{ S.trust=clamp(S.trust-2,0,100);} },
-      { t:"A viral doorstep moment boosts authenticity.", fx:()=>{ S.trust=clamp(S.trust+2,0,100);} },
-      { t:"Rain forecast dents turnout in low-engagement wards.", fx:()=>{
-          for(const w of S.wards) if(w.turnoutNow<38) w.turnoutNow=clamp(w.turnoutNow-0.5,20,80);
-        } },
-      { t:"A planning controversy dominates two wards this week.", fx:()=>{
-          const hit=[pick(S.wards), pick(S.wards)];
-          for(const w of hit){
-            if(w.issue==="Planning & housing"){
-              w.true[player]=clamp(w.true[player]-0.25,1,90);
-              renorm100(w.true);
-            }
-          }
-        } },
-      { t:"Social platform algorithm change reduces organic reach.", fx:()=>{ S.social.organicReach=clamp(S.social.organicReach-0.08,0.2,0.9);} },
-      { t:"A community endorsement lands well in one target ward.", fx:()=>{
-          const targets=S.wards.filter(w=>w.targetTier==="A");
-          const w = targets.length? pick(targets): pick(S.wards);
-          w.true[player]=clamp(w.true[player]+0.35,1,90); renorm100(w.true);
-        } },
-    ];
-    const ev = pick(events);
-    log(`[Event] ${ev.t}`);
-    ev.fx();
-  }
-
-  function updateEstimatesAndPolling(){
-    // Update each ward estimate toward truth with noise; sigma reduced by canvass and polling
-    for(const w of S.wards){
-      // player learns more where canvass coverage is high
-      const learn = 0.03 + (w.canvass/100)*0.10;
-      for(const p of Object.keys(w.est)){
-        // nudge estimate toward truth
-        w.est[p] = w.est[p] + (w.true[p]-w.est[p]) * learn + rand(-w.estSigma, w.estSigma)*0.02;
-      }
-      renorm100(w.est);
-      // sigma naturally creeps if you stop canvassing
-      w.estSigma = clamp(w.estSigma + 0.10, 2.0, 10.5);
-    }
-
-    // Council tracker poll (weekly)
-    const truth = councilTrueSupport();
-    const house = (S.difficulty===2 ? rand(-0.4,0.4) : rand(-0.25,0.25));
-    const sample = S.polling.sampleSize;
-    const pol = drawPollFromTruth(truth, sample, house);
-    S.polling.tracker.push({
-      week: S.week,
-      out: pol.out,
-      moe: pol.moe
-    });
-    // keep last 12
-    if(S.polling.tracker.length>12) S.polling.tracker.shift();
-  }
-
-  // ---------- social media ----------
-  function applySocialCouncilWide(){
-    // Council-wide social strategy modifies baseline awareness and can affect persuasion slightly.
-    const player=S.player;
-    const cadence=S.social.cadence; // 1..5
-    const tone=S.social.tone; // Positive/Contrast/Negative
-    const spend=S.socialSpendThisWeek; // from resources
-    const reach = clamp(S.social.organicReach + cadence*0.04, 0.2, 0.95);
-
-    for(const w of S.wards){
-      const dEff = (0.04 + spend/220) * (0.5 + w.digital) * reach;
-      w.awareness = clamp(w.awareness + dEff*0.12, 0, 1);
-
-      let persu = dEff*0.20;
-      if(tone==="Contrast") persu*=0.95;
-      if(tone==="Negative") persu*=0.85;
-
-      shiftSupport(w, player, persu, w.seg["Persuadable"]*100);
-
-      // backlash in high-trust wards if too negative
-      if(tone==="Negative" && w.issue==="Green spaces" && Math.random()<0.06){
-        w.turnoutNow = clamp(w.turnoutNow + 0.4, 20, 80);
-      }
-    }
-    log(`Social (council-wide) executed: tone=${tone}, cadence=${cadence}, spend=${spend}, reach=${reach.toFixed(2)}.`);
-  }
-
-  // ---------- rendering ----------
-  function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-  }
-
-  function renderMap(){
-    const cols=6, rows=5, cellW=150, cellH=72, pad=10;
-    const svgW=cols*cellW+pad*2, svgH=rows*cellH+pad*2;
-
-    const cells=[];
-    for(let i=0;i<30;i++){
-      const w=S.wards[i];
-      const id=w.id;
-      const c=i%cols, r=Math.floor(i/cols);
-      const x=pad+c*cellW, y=pad+r*cellH;
-
-      const shown = w.winner || w.lean;
-      const fill = partyFill(shown, w.winner ? 0.42 : 0.22);
-      const short = w.name.length>18 ? w.name.slice(0,18)+"…" : w.name;
-
-      cells.push(`
-        <g class="wardCell ${selectedWardId===id?"selected":""}" data-ward="${id}">
-          <rect x="${x}" y="${y}" width="${cellW-2}" height="${cellH-2}" rx="10" fill="${fill}"></rect>
-          <text x="${x+10}" y="${y+22}">${showLabels?escapeHtml(short):""}</text>
-          <text x="${x+10}" y="${y+44}" style="font-size:10px;fill:rgba(170,178,255,0.85);font-weight:900;">
-            ${showLabels ? (w.winner ? `Winner: ${w.winner}` : `Lean: ${w.lean}`) : ""}
-          </text>
-        </g>
-      `);
-    }
-
-    el("map").innerHTML = `
-      <svg viewBox="0 0 ${svgW} ${svgH}" role="img" aria-label="Council map">
-        ${cells.join("")}
-      </svg>
-    `;
-
-    el("map").querySelectorAll(".wardCell").forEach(g=>{
-      g.addEventListener("click", ()=>{
-        selectedWardId=+g.getAttribute("data-ward");
-        renderMap();
-        renderWardProfile(selectedWardId);
-      });
-    });
-  }
-
-  function renderWardProfile(id){
-    const w=S.wards.find(x=>x.id===id);
-    if(!w){ el("inspectTitle").textContent="Ward Profile"; el("inspectBody").textContent="Ward not found."; return; }
-
-    const player=S.player;
-    const lead = leadingParty(w.est);
-    const leadV = w.est[lead];
-    const pV = w.est[player];
-    const margin = pV - (lead===player ? secondPlace(w.est, player).v : leadV);
-
-    const est = w.est;
-    const tru = w.true;
-
-    const candRow = S.candidates.find(x=>x.wardId===w.id);
-    const candQ = candRow?.quality?.[player] ?? 55;
-
-    el("inspectTitle").innerHTML = `${escapeHtml(w.name)} <span class="tag">Ward ${w.id}</span> <span class="tag">Target ${w.targetTier}</span>`;
-    el("inspectBody").innerHTML = `
-      <div class="kv"><div class="key">Top issue</div><div class="val"><b>${escapeHtml(w.issue)}</b></div></div>
-      <div class="kv"><div class="key">Digital engagement</div><div class="val">${Math.round(w.digital*100)}%</div></div>
-      <div class="kv"><div class="key">Turnout</div><div class="val">${w.turnoutNow.toFixed(1)}% <span class="small">(base ${w.turnoutBase}%)</span></div></div>
-      <div class="kv"><div class="key">Canvass coverage</div><div class="val">${w.canvass.toFixed(0)}%</div></div>
-      <div class="kv"><div class="key">Awareness</div><div class="val">${Math.round(w.awareness*100)}%</div></div>
-      <div class="kv"><div class="key">Your candidate</div><div class="val">${escapeHtml(candRow?.names?.[player]||"—")} <span class="small">(quality ${candQ})</span></div></div>
-
-      <div class="hr"></div>
-      <div style="font-weight:1000;">Estimated vote (your intel)</div>
-      ${distTable(est, w.estSigma)}
-      <div class="small">Ward polling uncertainty (σ): ~${w.estSigma.toFixed(1)} pts. Canvassing/polling reduces this.</div>
-
-      <div class="hr"></div>
-      <div style="font-weight:1000;">Segments</div>
-      <div class="small">
-        Base ${Math.round(w.seg["Base"]*100)}% • Persuadable ${Math.round(w.seg["Persuadable"]*100)}% • Soft Opp. ${Math.round(w.seg["Soft Opp."]*100)}% • Non-voter ${Math.round(w.seg["Non-voter"]*100)}%
-      </div>
-
-      <div class="hr"></div>
-      <div style="font-weight:1000;">Plan this week</div>
-      <div class="small">Allocate actions in the Wards tab (list view). This panel shows outcomes only.</div>
-
-      <div class="hr"></div>
-      <div class="small"><b>Current estimated margin (you vs leader):</b> ${margin>=0?`<span class="good"><b>+${margin.toFixed(1)}</b></span>`:`<span class="bad"><b>${margin.toFixed(1)}</b></span>`}</div>
-    `;
-  }
-
-  function distTable(dist, sigma){
-    const rows = Object.keys(dist).map(p=>{
-      const v = dist[p];
-      return `<tr><td><b class="${partyCss(p)}">${p}</b></td><td>${v.toFixed(1)}%</td></tr>`;
-    }).join("");
-    return `
-      <table>
-        <thead><tr><th>Party</th><th>Estimate</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `;
-  }
-
-  function renderDashboard(){
-    const player=S.player;
-    const truth=councilTrueSupport();
-    const est=councilEstimatedSupport();
-
-    const last = S.polling.tracker[S.polling.tracker.length-1];
-    const lastTxt = last ? `Week ${last.week} tracker • MoE ±${last.moe.toFixed(1)} • ${Object.keys(last.out).map(p=>`${p} ${last.out[p].toFixed(1)}%`).join(" / ")}` : "No polling yet.";
-
-    // projection (rough): seat = ward est winner
-    const proj = projectSeatsFromEst();
-    el("projSeats").textContent = `${proj[player] || 0}`;
-
-    el("tab_dashboard").innerHTML = `
-      <div class="twoCol">
-        <div class="card" style="padding:10px">
-          <div style="font-weight:1000;">Council-wide profile</div>
-          <div class="hr"></div>
-          <div class="kv"><div class="key">Your brand trust</div><div class="val">${S.trust.toFixed(0)} / 100</div></div>
-          <div class="kv"><div class="key">Volunteer capacity</div><div class="val">${S.resources.volunteers.toFixed(0)} / ${S.resources.volunteersMax}</div></div>
-          <div class="kv"><div class="key">Candidate time</div><div class="val">${S.resources.candTime.toFixed(0)} / ${S.resources.candTimeMax}</div></div>
-          <div class="kv"><div class="key">Cash (weekly income)</div><div class="val">£${S.resources.cash.toFixed(0)} (+£${S.resources.cashIncome})</div></div>
-          <div class="kv"><div class="key">Social capacity</div><div class="val">${S.resources.socialCap.toFixed(0)} / ${S.resources.socialCapMax}</div></div>
-
-          <div class="hr"></div>
-          <div class="small"><b>Top issues council-wide (approx):</b> ${topIssuesCouncil().map(i=>`<span class="tag">${escapeHtml(i)}</span>`).join(" ")}</div>
-        </div>
-
-        <div class="card" style="padding:10px">
-          <div style="font-weight:1000;">Polling snapshot</div>
-          <div class="hr"></div>
-          <div class="small">${escapeHtml(lastTxt)}</div>
-          <div class="hr"></div>
-          <div style="font-weight:1000;">Your estimated council vote</div>
-          ${distTable(est, 0)}
-          <div class="small">Note: this is your <b>estimate</b>, informed by canvass + polls. True vote is hidden.</div>
-        </div>
-      </div>
-
-      <div class="hr"></div>
-
-      <div class="threeCol">
-        ${targetKpis()}
-      </div>
-
-      <div class="hr"></div>
-
-      <div class="small">
-        How to play: In <b>Wards (List)</b>, set target tiers and allocate actions (doors/phones/leaflets/visits/ward-social).
-        In <b>Social Media</b>, set council-wide tone/cadence and optionally spend social capacity. Then hit <b>Resolve Week</b>.
-      </div>
-    `;
-  }
-
-  function topIssuesCouncil(){
-    const counts={};
-    for(const w of S.wards) counts[w.issue]=(counts[w.issue]||0)+1;
-    return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,4).map(x=>x[0]);
-  }
-
-  function targetKpis(){
-    const player=S.player;
-    const tiers={A:[],B:[],C:[],None:[]};
-    for(const w of S.wards){
-      const t=w.targetTier||"None";
-      (tiers[t] ||= []).push(w);
-    }
-    const cards=[];
-    for(const t of ["A","B","C","None"]){
-      const ws=tiers[t]||[];
-      const avgMargin = avg(ws.map(w=>estMargin(w, player)));
-      const avgCanv = avg(ws.map(w=>w.canvass));
-      const avgSig  = avg(ws.map(w=>w.estSigma));
-      cards.push(`
-        <div class="card" style="padding:10px">
-          <div style="font-weight:1000;">Targets ${t} <span class="tag">${ws.length} wards</span></div>
-          <div class="hr"></div>
-          <div class="kv"><div class="key">Avg est margin</div><div class="val">${fmtMargin(avgMargin)}</div></div>
-          <div class="kv"><div class="key">Avg canvass</div><div class="val">${avgCanv.toFixed(0)}%</div></div>
-          <div class="kv"><div class="key">Avg uncertainty</div><div class="val">σ ${avgSig.toFixed(1)} pts</div></div>
-        </div>
-      `);
-    }
-    return cards.join("");
-  }
-
-  function fmtMargin(m){
-    if(!isFinite(m)) return "—";
-    return m>=0 ? `<span class="good"><b>+${m.toFixed(1)}</b></span>` : `<span class="bad"><b>${m.toFixed(1)}</b></span>`;
-  }
-
-  function renderWardsList(){
-    const player=S.player;
-
-    // controls
-    const controls = `
-      <div class="row" style="justify-content:space-between">
-        <div class="row">
-          <span class="tag">Click a row to open ward profile</span>
-          <span class="tag">Sort by clicking headers</span>
-        </div>
-        <div class="row">
-          <button class="btnSm" id="autoTargets">Auto-target (A/B/C)</button>
-          <button class="btnSm" id="clearPlans">Clear Plans</button>
-        </div>
-      </div>
-      <div class="hr"></div>
-      <div class="small">
-        Weekly planning: actions spend resources immediately (so you can’t over-allocate).
-        Doors/Phones spend volunteers; Leaflets spend cash; Visits spend candidate time; Ward-social spends social capacity.
-      </div>
-    `;
-
-    const rows = S.wards.map(w=>{
-      const lead = leadingParty(w.est);
-      const leadV = w.est[lead];
-      const pV = w.est[player];
-      const margin = estMargin(w, player);
-      const moelike = w.estSigma * 0.9;
-
-      return `
-        <tr data-ward="${w.id}">
-          <td><b>${escapeHtml(w.name)}</b><div class="small">${escapeHtml(w.issue)}</div></td>
-          <td><span class="tag">${w.targetTier}</span></td>
-          <td class="small"><b>${w.lean}</b> • vol ${w.volatility} • dig ${Math.round(w.digital*100)}%</td>
-          <td>${fmtMargin(margin)}<div class="small">σ~${moelike.toFixed(1)}</div></td>
-          <td>${w.canvass.toFixed(0)}%</td>
-          <td>${Math.round(w.awareness*100)}%</td>
-          <td>${w.turnoutNow.toFixed(1)}%</td>
-          <td>
-            <select data-tier="${w.id}">
-              ${["A","B","C","None"].map(t=>`<option value="${t}" ${w.targetTier===t?"selected":""}>${t}</option>`).join("")}
-            </select>
-          </td>
-          <td>
-            <div class="small">Doors <b>${w.plan.doors}</b> • Phones <b>${w.plan.phones}</b><br/>
-            Leaf <b>${w.plan.leaflets}</b> • Visit <b>${w.plan.visit}</b> • Social <b>${w.plan.social}</b>
-          </td>
-          <td>
-            <div class="row" style="gap:6px">
-              <button class="btnSm" data-act="doors" data-id="${w.id}">+Doors</button>
-              <button class="btnSm" data-act="phones" data-id="${w.id}">+Phone</button>
-              <button class="btnSm" data-act="leaflets" data-id="${w.id}">+Leaf</button>
-              <button class="btnSm" data-act="visit" data-id="${w.id}">+Visit</button>
-              <button class="btnSm" data-act="social" data-id="${w.id}">+Ad</button>
-            </div>
-          </td>
-        </tr>
-      `;
-    }).join("");
-
-    el("tab_wards").innerHTML = `
-      ${controls}
-      <table id="wardsTable">
-        <thead>
-          <tr>
-            <th data-sort="name">Ward</th>
-            <th data-sort="tier">Target</th>
-            <th data-sort="profile">Profile</th>
-            <th data-sort="margin">Est margin</th>
-            <th data-sort="canvass">Canvass</th>
-            <th data-sort="aware">Aware</th>
-            <th data-sort="turnout">Turnout</th>
-            <th>Set tier</th>
-            <th>Plan</th>
-            <th>Allocate</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div class="hr"></div>
-      ${renderResourcesPanel()}
-    `;
-
-    // row click
-    el("tab_wards").querySelectorAll("tbody tr").forEach(tr=>{
-      tr.addEventListener("click",(e)=>{
-        if(e.target.tagName==="BUTTON" || e.target.tagName==="SELECT") return;
-        const id=+tr.getAttribute("data-ward");
-        selectedWardId=id; renderMap(); renderWardProfile(id);
-      });
-    });
-
-    // tier select
-    el("tab_wards").querySelectorAll("select[data-tier]").forEach(sel=>{
-      sel.addEventListener("change", ()=>{
-        const id=+sel.getAttribute("data-tier");
-        const w=S.wards.find(x=>x.id===id);
-        w.targetTier=sel.value;
-        renderDashboard(); renderGroups(); // reflect quickly
-      });
-    });
-
-    // allocate buttons
-    el("tab_wards").querySelectorAll("button[data-act]").forEach(btn=>{
-      btn.addEventListener("click",(e)=>{
-        e.stopPropagation();
-        const id=+btn.getAttribute("data-id");
-        const act=btn.getAttribute("data-act");
-        allocateAction(id, act);
-        renderWardsList(); // refresh plan numbers/resources
-        if(selectedWardId) renderWardProfile(selectedWardId);
-      });
-    });
-
-    // auto targets
-    el("autoTargets").onclick=()=>{
-      autoAssignTargets();
-      renderAll();
-    };
-    el("clearPlans").onclick=()=>{
-      for(const w of S.wards) w.plan={doors:0,phones:0,leaflets:0,visit:0,social:0};
-      renderAll();
-    };
-
-    // sorting
-    const head = el("tab_wards").querySelectorAll("th[data-sort]");
-    head.forEach(th=>{
-      th.addEventListener("click", ()=>{
-        const k=th.getAttribute("data-sort");
-        sortWards(k);
-        renderWardsList();
-      });
-    });
-  }
-
-  function renderResourcesPanel(){
-    const r=S.resources;
-    return `
-      <div class="card" style="padding:10px">
-        <div style="font-weight:1000;">Resources (this week)</div>
-        <div class="hr"></div>
-        <div class="kv"><div class="key">Volunteers</div><div class="val">${r.volunteers.toFixed(0)} / ${r.volunteersMax}</div></div>
-        <div class="kv"><div class="key">Candidate time</div><div class="val">${r.candTime.toFixed(0)} / ${r.candTimeMax}</div></div>
-        <div class="kv"><div class="key">Cash</div><div class="val">£${r.cash.toFixed(0)} (income +£${r.cashIncome}/wk)</div></div>
-        <div class="kv"><div class="key">Social capacity</div><div class="val">${r.socialCap.toFixed(0)} / ${r.socialCapMax}</div></div>
-        <div class="small">Costs: Doors -10 vols, Phone -14 vols, Leaflets -£60, Visit -1 time, Ward social -20 cap. Council-wide social spend uses cap too.</div>
-      </div>
-    `;
-  }
-
-  function allocateAction(wardId, act){
-    const w=S.wards.find(x=>x.id===wardId);
-    const r=S.resources;
-    if(act==="doors"){
-      if(r.volunteers<10) return log("Not enough volunteer hours for doors.");
-      r.volunteers-=10; w.plan.doors+=10;
-      w.estSigma = clamp(w.estSigma - 0.15, 2.0, 10.5);
-    }
-    if(act==="phones"){
-      if(r.volunteers<14) return log("Not enough volunteer hours for phones.");
-      r.volunteers-=14; w.plan.phones+=14;
-      w.estSigma = clamp(w.estSigma - 0.10, 2.0, 10.5);
-    }
-    if(act==="leaflets"){
-      if(r.cash<60) return log("Not enough cash for leaflets.");
-      r.cash-=60; w.plan.leaflets+=25;
-    }
-    if(act==="visit"){
-      if(r.candTime<1) return log("Not enough candidate time for a visit.");
-      r.candTime-=1; w.plan.visit+=1;
-    }
-    if(act==="social"){
-      if(r.socialCap<20) return log("Not enough social capacity for a ward ad burst.");
-      r.socialCap-=20; w.plan.social+=20;
-    }
-  }
-
-  function sortWards(key){
-    const player=S.player;
-    const dir = (S.sort.key===key ? -S.sort.dir : 1);
-    S.sort={key,dir};
-    const s=dir;
-    S.wards.sort((a,b)=>{
-      const A = wardSortValue(a,key,player);
-      const B = wardSortValue(b,key,player);
-      if(A<B) return -1*s;
-      if(A>B) return  1*s;
-      return 0;
-    });
-  }
-
-  function wardSortValue(w,key,player){
-    switch(key){
-      case "name": return w.name;
-      case "tier": return w.targetTier;
-      case "profile": return w.digital;
-      case "margin": return estMargin(w,player);
-      case "canvass": return w.canvass;
-      case "aware": return w.awareness;
-      case "turnout": return w.turnoutNow;
-      default: return 0;
-    }
-  }
-
-  function autoAssignTargets(){
-    const player=S.player;
-    // A: within +/-3, B: within +/-7, C: within +/-12 else None
-    for(const w of S.wards){
-      const m = Math.abs(estMargin(w, player));
-      if(m<=3) w.targetTier="A";
-      else if(m<=7) w.targetTier="B";
-      else if(m<=12) w.targetTier="C";
-      else w.targetTier="None";
-    }
-    log("Auto-targeted wards based on estimated margins.");
-  }
-
-  function renderGroups(){
-    const player=S.player;
-    const buckets = {
-      "Safe (you lead big)": [],
-      "Lean (you ahead)": [],
-      "Marginal": [],
-      "Lean against": [],
-      "Tough": []
-    };
-    for(const w of S.wards){
-      const m = estMargin(w, player);
-      if(m>=8) buckets["Safe (you lead big)"].push(w);
-      else if(m>=3) buckets["Lean (you ahead)"].push(w);
-      else if(m>-3) buckets["Marginal"].push(w);
-      else if(m>-8) buckets["Lean against"].push(w);
-      else buckets["Tough"].push(w);
-    }
-
-    const html = Object.entries(buckets).map(([k,ws])=>{
-      ws.sort((a,b)=>estMargin(b,player)-estMargin(a,player));
-      return `
-        <div class="card" style="padding:10px;margin-bottom:10px">
-          <div style="font-weight:1000;">${escapeHtml(k)} <span class="tag">${ws.length} wards</span></div>
-          <div class="hr"></div>
-          <table>
-            <thead><tr><th>Ward</th><th>Issue</th><th>Target</th><th>Est margin</th><th>Canvass</th><th>σ</th></tr></thead>
-            <tbody>
-              ${ws.map(w=>`
-                <tr data-ward="${w.id}">
-                  <td><b>${escapeHtml(w.name)}</b></td>
-                  <td class="small">${escapeHtml(w.issue)}</td>
-                  <td><span class="tag">${w.targetTier}</span></td>
-                  <td>${fmtMargin(estMargin(w,player))}</td>
-                  <td>${w.canvass.toFixed(0)}%</td>
-                  <td class="small">${w.estSigma.toFixed(1)}</td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        </div>
-      `;
-    }).join("");
-
-    el("tab_groups").innerHTML = `
-      <div class="small">Grouped view helps you see the battlefield. Click a row to open ward profile.</div>
-      <div class="hr"></div>
-      ${html}
-    `;
-
-    el("tab_groups").querySelectorAll("tr[data-ward]").forEach(tr=>{
-      tr.addEventListener("click", ()=>{
-        const id=+tr.getAttribute("data-ward");
-        selectedWardId=id;
-        renderMap(); renderWardProfile(id);
-      });
-    });
-  }
-
-  function renderPolling(){
-    const tracker=S.polling.tracker;
-    const latest = tracker[tracker.length-1];
-    const truth = councilTrueSupport();
-    const est = councilEstimatedSupport();
-
-    const ward = selectedWardId ? S.wards.find(w=>w.id===selectedWardId) : null;
-
-    let wardPollHtml = `<div class="small">Select a ward on the map to see ward polling.</div>`;
-    if(ward){
-      const sample = S.polling.wardSampleSize;
-      // draw a fresh ward poll from truth (expensive feature in full game; here it's a preview)
-      const pol = drawPollFromTruth(ward.true, sample, rand(-0.25,0.25));
-      wardPollHtml = `
-        <div class="card" style="padding:10px">
-          <div style="font-weight:1000;">Ward poll (snapshot): ${escapeHtml(ward.name)}</div>
-          <div class="small">Sample ${sample} • MoE ±${pol.moe.toFixed(1)} (noisy by design)</div>
-          <div class="hr"></div>
-          ${distTable(pol.out,0)}
-          <div class="small">In the full game, ward polls would cost money and reduce uncertainty only in that ward.</div>
-        </div>
-      `;
-    }
-
-    el("tab_polls").innerHTML = `
-      <div class="twoCol">
-        <div class="card" style="padding:10px">
-          <div style="font-weight:1000;">Council tracker (weekly)</div>
-          <div class="small">${latest ? `Latest: Week ${latest.week} • MoE ±${latest.moe.toFixed(1)}` : "No tracker yet."}</div>
-          <div class="hr"></div>
-          ${latest ? distTable(latest.out,0) : "<div class='small'>Start campaign to generate polling.</div>"}
-          <div class="hr"></div>
-          <div class="small">Your estimated council vote (intel blend):</div>
-          ${distTable(est,0)}
-        </div>
-
-        <div>
-          ${wardPollHtml}
-          <div class="card" style="padding:10px;margin-top:10px">
-            <div style="font-weight:1000;">Polling settings</div>
-            <div class="hr"></div>
-            <div class="kv"><div class="key">Tracker sample</div><div class="val">${S.polling.sampleSize}</div></div>
-            <div class="kv"><div class="key">Ward poll sample</div><div class="val">${S.polling.wardSampleSize}</div></div>
-            <div class="small">Prototype note: tracker is automatic weekly. Later you can buy bigger samples.</div>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderSocial(){
-    el("tab_social").innerHTML = `
-      <div class="twoCol">
-        <div class="card" style="padding:10px">
-          <div style="font-weight:1000;">Council-wide social strategy</div>
-          <div class="hr"></div>
-
-          <div class="kv"><div class="key">Tone</div>
-            <div class="val">
-              <select id="toneSel">
-                ${["Positive","Contrast","Negative"].map(t=>`<option ${S.social.tone===t?"selected":""}>${t}</option>`).join("")}
-              </select>
-            </div>
-          </div>
-
-          <div class="kv"><div class="key">Cadence</div>
-            <div class="val">
-              <input id="cadence" type="range" min="1" max="5" value="${S.social.cadence}"/>
-              <span class="tag">x${S.social.cadence} posts/week</span>
-            </div>
-          </div>
-
-          <div class="kv"><div class="key">Narrative</div>
-            <div class="val">
-              <select id="narrSel">
-                ${["Fix the Basics","Protect the High Street","Homes Done Right","Cleaner & Safer","Green & Local"].map(n=>`<option ${S.social.narrative===n?"selected":""}>${n}</option>`).join("")}
-              </select>
-            </div>
-          </div>
-
-          <div class="kv"><div class="key">Organic reach</div>
-            <div class="val">
-              <div class="meter"><div style="width:${Math.round(S.social.organicReach*100)}%;background:rgba(170,178,255,0.75)"></div></div>
-              <div class="small">${Math.round(S.social.organicReach*100)}%</div>
-            </div>
-          </div>
-
-          <div class="hr"></div>
-          <div class="kv"><div class="key">Spend this week</div>
-            <div class="val">
-              <select id="spendSel">
-                ${[0,20,40,60,80,100].map(v=>`<option value="${v}" ${S.socialSpendThisWeek===v?"selected":""}>${v} cap</option>`).join("")}
-              </select>
-              <span class="small">(uses social capacity)</span>
-            </div>
-          </div>
-
-          <div class="row" style="margin-top:8px">
-            <button id="applySocial">Apply Council Social (now)</button>
-            <span class="small">Tip: then allocate ward ad bursts in the Wards list.</span>
-          </div>
-
-          <div class="hr"></div>
-          <div class="small">
-            Social effects are stronger in wards with higher <b>Digital engagement</b>.
-            Negative tone can backfire by increasing opponent turnout in some wards.
-          </div>
-        </div>
-
-        <div class="card" style="padding:10px">
-          <div style="font-weight:1000;">What social changes</div>
-          <div class="hr"></div>
-          <ul class="small">
-            <li><b>Awareness</b> rises council-wide; higher awareness makes other actions more effective.</li>
-            <li><b>Persuasion</b> shifts small amounts in persuadable pool (bigger where digital engagement is high).</li>
-            <li><b>Backlash</b> risk increases with Negative tone (turnout bump for opponents in some wards).</li>
-          </ul>
-          <div class="hr"></div>
-          <div class="small"><b>Current settings:</b></div>
-          <div class="small">
-            Tone: <b>${S.social.tone}</b> • Cadence: <b>${S.social.cadence}</b>/wk • Narrative: <b>${escapeHtml(S.social.narrative)}</b><br/>
-            Spend queued: <b>${S.socialSpendThisWeek}</b> cap • Social capacity left: <b>${S.resources.socialCap}</b>
-          </div>
-        </div>
-      </div>
-    `;
-
-    el("toneSel").onchange=(e)=>S.social.tone=e.target.value;
-    el("cadence").oninput=(e)=>{ S.social.cadence=+e.target.value; renderSocial(); };
-    el("narrSel").onchange=(e)=>S.social.narrative=e.target.value;
-    el("spendSel").onchange=(e)=>S.socialSpendThisWeek=+e.target.value;
-
-    el("applySocial").onclick=()=>{
-      if(S.resources.socialCap < S.socialSpendThisWeek){
-        log("Not enough social capacity for that spend. Reduce spend or free capacity.");
-        return;
-      }
-      S.resources.socialCap -= S.socialSpendThisWeek;
-      applySocialCouncilWide();
-      renderAll();
-    };
-  }
-
-  function projectSeatsFromEst(){
-    const seats={CIV:0,LAB:0,GRN:0,CON:0};
-    for(const w of S.wards){
-      const win=leadingParty(w.est);
-      seats[win] += 1;
-    }
-    return seats;
-  }
-
-  function electionNight(){
-    setPhase("Election Night");
-    log("\n=== ELECTION NIGHT ===");
-    // Outcome uses TRUE support + turnoutNow + noise
-    const seats={CIV:0,LAB:0,GRN:0,CON:0};
-
-    for(const w of S.wards){
-      const out={...w.true};
-      // turnout affects volatility: low turnout -> more random
-      const tFactor = clamp((50 - w.turnoutNow)/50, 0, 0.8);
-      const noise = (1.2 + tFactor*2.0) * (0.6 + w.volatility/10);
-      // apply random noise
-      for(const p of Object.keys(out)){
-        out[p]=clamp(out[p] + rand(-noise, noise), 1, 90);
-      }
-      renorm100(out);
-      const win=leadingParty(out);
-      w.winner=win;
-      seats[win]+=1;
-    }
-
-    // report
-    const player=S.player;
-    const playerSeats=seats[player]||0;
-    log(`Result: ${partyName(player)} (${player}) wins ${playerSeats} seats.`);
-    log(`Seat table: CIV ${seats.CIV} / LAB ${seats.LAB} / GRN ${seats.GRN} / CON ${seats.CON}`);
-
-    const maj = playerSeats>=16;
-    log(maj ? "✅ Majority control (16+)." : "⚠️ No majority — coalition talks would follow (next feature).");
-
-    el("electionBtn").disabled=true;
-    el("nextBtn").disabled=true;
-    renderAll();
-  }
-
-  // ---------- tabs ----------
-  function switchTab(name){
-    ["dashboard","wards","groups","polls","social"].forEach(t=>{
-      el("tab_"+t).style.display = (t===name) ? "block" : "none";
-      document.querySelector(`.tab[data-tab="${t}"]`).classList.toggle("active", t===name);
-    });
-    // rerender tab content when switching (keeps it consistent)
-    if(name==="dashboard") renderDashboard();
-    if(name==="wards") renderWardsList();
-    if(name==="groups") renderGroups();
-    if(name==="polls") renderPolling();
-    if(name==="social") renderSocial();
-  }
-
-  // ---------- render all ----------
-  function renderAll(){
-    renderMap();
-    renderDashboard();
-    renderWardsList();
-    renderGroups();
-    renderPolling();
-    renderSocial();
-    if(selectedWardId) renderWardProfile(selectedWardId);
-  }
-
-  // ---------- setup/start ----------
-  function newCampaign(){
-    const player=el("playerParty").value;
-    const diff=+el("difficulty").value;
-    const totalWeeks=+el("weeks").value;
-
-    S={
-      player,
-      difficulty:diff,
-      totalWeeks,
-      week:0,
-      trust:55,
-      wards:genWards(),
-      candidates:null,
-      polling:{
-        sampleSize: diff===0? 1400 : diff===1? 1100 : 900,
-        wardSampleSize: diff===0? 650 : diff===1? 500 : 400,
-        tracker:[]
-      },
-      social:{
-        tone:"Positive",
-        cadence:3,
-        narrative:"Fix the Basics",
-        organicReach:0.62
-      },
-      socialSpendThisWeek:40,
-      resources:{
-        volunteersMax: diff===0? 520 : diff===1? 450 : 390,
-        candTimeMax:   diff===0? 12  : diff===1? 10  : 9,
-        cash:          diff===0? 900 : diff===1? 750 : 650,
-        cashIncome:    diff===0? 90  : diff===1? 80  : 70,
-        socialCapMax:  diff===0? 220 : diff===1? 200 : 180,
-        volunteers:0, candTime:0, socialCap:0
-      },
-      sort:{key:"name",dir:1}
-    };
-
-    S.candidates=genCandidates(S.wards);
-
-    // set starting resource pools
-    S.resources.volunteers=S.resources.volunteersMax;
-    S.resources.candTime=S.resources.candTimeMax;
-    S.resources.socialCap=S.resources.socialCapMax;
-
-    // initial targets
-    for(const w of S.wards) w.targetTier="B";
-    autoAssignTargets();
-
-    // default selected ward
-    selectedWardId=S.wards[0].id;
-
-    // clear UI states
-    el("log").textContent="";
-    log("New campaign created. Use Wards list to allocate actions. Social Media tab controls council-wide posts.");
-
-    setPhase("Setup");
-    setWeek("—");
-    el("projSeats").textContent="—";
-
-    // buttons
-    el("startBtn").disabled=false;
-    el("nextBtn").disabled=true;
-    el("electionBtn").disabled=true;
-    el("toggleLabels").disabled=false;
-
-    renderAll();
-  }
-
-  function startCampaign(){
-    if(!S) return;
-    S.week=1;
-    setPhase("Campaign");
-    setWeek("1");
-    el("startBtn").disabled=true;
-    el("nextBtn").disabled=false;
-    el("electionBtn").disabled=true;
-
-    // first tracker poll
-    updateEstimatesAndPolling();
-    log("\nCampaign started. Week 1 tracker poll published (with error).");
-    renderAll();
-  }
-
-  // ---------- wire UI ----------
-  document.querySelectorAll(".tab").forEach(t=>{
-    t.addEventListener("click", ()=>switchTab(t.getAttribute("data-tab")));
+  d.history.push({
+    week: GAME.week,
+    action, issueKey, frame, tone, intensity,
+    shift: actualShift,
+    turnoutBoost,
+    backlash: backlashRoll
   });
 
-  el("newBtn").onclick=newCampaign;
-  el("startBtn").onclick=startCampaign;
-  el("nextBtn").onclick=resolveWeek;
-  el("electionBtn").onclick=electionNight;
+  return summary;
+}
 
-  el("toggleLabels").onclick=()=>{
-    showLabels=!showLabels;
-    renderMap();
-  };
+function opponentPhase(){
+  // Lightweight opponent actions: each week they nudge a couple districts.
+  // This is deliberately simple; you can replace with full AI playbooks later.
+  for(const opp of GAME.opponents){
+    const focus = pick(GAME.districts);
+    const issueKey = focus.topIssueKey;
+    // Opponent effect reduces your share slightly in that district (competition).
+    const s = focus.latent.support;
 
-  // start tab
-  switchTab("dashboard");
-  el("tab_dashboard").innerHTML = `<div class="small">Click <b>New Campaign</b> to generate your 30 wards and start planning.</div>`;
-})();
+    // Incumbent tends to benefit from name recognition late
+    let base = 0.0012;
+    if(opp.party==="Conservative") base += 0.0005;
+    if(opp.style.includes("Ground")) base += 0.0007;
+
+    // Random
+    const delta = clamp(base + rnd(-0.0005,0.0012), 0, 0.003);
+    // Pull from you toward opponent party bucket
+    const k = (opp.party==="Conservative") ? "con" :
+              (opp.party==="Labour") ? "lab" : "ind";
+
+    s.you = clamp(s.you - delta, 0.01, 0.95);
+    s[k] = clamp(s[k] + delta*0.9, 0.01, 0.95);
+    // renormalise
+    const sum = s.you + s.con + s.lab + s.ind;
+    s.you/=sum; s.con/=sum; s.lab/=sum; s.ind/=sum;
+
+    // small narrative effect: if opponent is active and you are saturated poorly, trust may drift
+    if(Math.random() < 0.15) focus.latent.trustYou = clamp(focus.latent.trustYou - 0.002, 0.15, 0.9);
+  }
+}
+
+function eventsPhase(){
+  const log = [];
+
+  // Salience drift: local issues ebb/flow
+  for(const issue of GAME.issues){
+    issue.salience = clamp(issue.salience + rnd(-3,3), 25, 90);
+  }
+
+  // Occasional events
+  const pEvent = 0.28;
+  if(Math.random() < pEvent){
+    const type = pick(["asbSpike","binMiss","planningRow","nationalWave","candidateGaffe","goodEndorsement","weatherSnap"]);
+    if(type==="asbSpike"){
+      issueByKey("asb").salience = clamp(issueByKey("asb").salience + irnd(6,14), 25, 95);
+      log.push("Event: anti-social behaviour incident spikes concern (+ASB salience).");
+    }
+    if(type==="binMiss"){
+      issueByKey("bins").salience = clamp(issueByKey("bins").salience + irnd(6,12), 25, 95);
+      log.push("Event: missed bin collections trend on local Facebook (+Bins salience).");
+    }
+    if(type==="planningRow"){
+      issueByKey("planning").salience = clamp(issueByKey("planning").salience + irnd(7,15), 25, 95);
+      log.push("Event: planning application row heats up (+Development salience, polarising).");
+    }
+    if(type==="nationalWave"){
+      // National politics bleed-through, random direction, small
+      const swingToCon = Math.random() < 0.5;
+      for(const d of GAME.districts){
+        const s = d.latent.support;
+        const delta = rnd(0.0005,0.002);
+        if(swingToCon){ s.con += delta; s.you -= delta*0.45; s.lab -= delta*0.45; }
+        else { s.lab += delta; s.you -= delta*0.35; s.con -= delta*0.55; }
+        const sum = s.you + s.con + s.lab + s.ind;
+        s.you/=sum; s.con/=sum; s.lab/=sum; s.ind/=sum;
+      }
+      log.push(`Event: national politics breaks through (small ward-wide drift ${swingToCon ? "toward Con" : "toward Lab"}).`);
+    }
+    if(type==="candidateGaffe"){
+      const hit = rnd(0.006, 0.018) * (1 + GAME.resources.ethicalDebt*0.03);
+      GAME.resources.energy = clamp(GAME.resources.energy - irnd(6,12), 0, 100);
+      for(const d of GAME.districts){
+        d.latent.trustYou = clamp(d.latent.trustYou - hit*0.25, 0.15, 0.9);
+        // small vote share hit
+        const s = d.latent.support;
+        s.you = clamp(s.you - hit*0.22, 0.01, 0.95);
+        s.con = clamp(s.con + hit*0.08, 0.01, 0.95);
+        s.lab = clamp(s.lab + hit*0.10, 0.01, 0.95);
+        s.ind = clamp(s.ind + hit*0.04, 0.01, 0.95);
+        const sum = s.you + s.con + s.lab + s.ind;
+        s.you/=sum; s.con/=sum; s.lab/=sum; s.ind/=sum;
+      }
+      log.push("Event: minor gaffe picked up locally (trust & support down a touch).");
+    }
+    if(type==="goodEndorsement"){
+      const bump = rnd(0.003, 0.010);
+      GAME.resources.energy = clamp(GAME.resources.energy + irnd(2,6), 0, 100);
+      for(const d of GAME.districts){
+        d.latent.awarenessYou = clamp(d.latent.awarenessYou + bump*0.6, 0.05, 0.95);
+        d.latent.trustYou = clamp(d.latent.trustYou + bump*0.5, 0.15, 0.9);
+      }
+      log.push("Event: respected community endorsement (small awareness/trust bump).");
+    }
+    if(type==="weatherSnap"){
+      // affects turnout elasticity
+      const cold = Math.random() < 0.5;
+      for(const d of GAME.districts){
+        d.latent.turnout = clamp(d.latent.turnout + (cold ? rnd(-0.006,-0.001) : rnd(0.001,0.005)), 0.2, 0.78);
+      }
+      log.push(`Event: weather snap (${cold ? "cold/rain" : "mild"}) nudges turnout.`);
+    }
+  }
+
+  // Ethical debt slowly fades
+  GAME.resources.ethicalDebt = clamp(GAME.resources.ethicalDebt * 0.92, 0, 999);
+
+  return log;
+}
+
+function refreshWeeklyResources(){
+  // fundraising + volunteer recruitment baseline
+  const fund = irnd(140, 420);
+  const vols = irnd(12, 30);
+  const energyRegen = irnd(8, 16);
+
+  GAME.resources.money += fund;
+  GAME.resources.volHours += vols;
+  GAME.resources.energy = clamp(GAME.resources.energy + energyRegen, 0, 100);
+
+  return { fund, vols, energyRegen };
+}
+
+/* ---------- UI Rendering ---------- */
+const el = (id)=>document.getElementById(id);
+
+let WEEK_ACTION_SNAPSHOT = null; // for reset week button
+
+function snapshotWeek(){
+  WEEK_ACTION_SNAPSHOT = JSON.parse(JSON.stringify({
+    resources: GAME.resources,
+    districts: GAME.districts,
+    issues: GAME.issues,
+  }));
+}
+function restoreWeek(){
+  if(!WEEK_ACTION_SNAPSHOT) return;
+  GAME.resources = JSON.parse(JSON.stringify(WEEK_ACTION_SNAPSHOT.resources));
+  GAME.districts = JSON.parse(JSON.stringify(WEEK_ACTION_SNAPSHOT.districts));
+  GAME.issues = JSON.parse(JSON.stringify(WEEK_ACTION_SNAPSHOT.issues));
+}
+
+function renderHeader(){
+  el("wardName").textContent = `${GAME.ward.name}`;
+  el("wardMeta").textContent = `${GAME.ward.council} • Electorate ${fmt(GAME.ward.electorate)} • Pop ${fmt(GAME.ward.population)}`;
+  el("weekLabel").textContent = `Week ${GAME.week} / ${GAME.totalWeeks}`;
+  const late = GAME.week >= Math.floor(GAME.totalWeeks*0.75);
+  GAME.phase = late ? "Late Campaign" : "Campaign";
+  el("phaseLabel").textContent = GAME.phase;
+}
+
+function renderKPIs(){
+  el("kpiMoney").textContent = `£${fmt(Math.max(0, Math.round(GAME.resources.money)))}`;
+  el("kpiVol").textContent = fmt(Math.max(0, Math.round(GAME.resources.volHours)));
+  el("kpiEnergy").textContent = fmt(Math.max(0, Math.round(GAME.resources.energy)));
+  el("kpiEthics").textContent = fmt(Math.round(GAME.resources.ethicalDebt));
+}
+
+function renderIssues(){
+  const cont = el("topIssues");
+  cont.innerHTML = "";
+  for(const i of top3Issues()){
+    const span = document.createElement("span");
+    span.className = "tag";
+    span.textContent = `${i.name} (${i.salience})`;
+    cont.appendChild(span);
+  }
+  // issue selector
+  const sel = el("selIssue");
+  sel.innerHTML = "";
+  for(const i of [...GAME.issues].sort((a,b)=>b.salience-a.salience)){
+    const opt = document.createElement("option");
+    opt.value = i.key;
+    opt.textContent = `${i.name} (salience ${i.salience})`;
+    sel.appendChild(opt);
+  }
+}
+
+function renderCandidateStats(){
+  const stats = GAME.candidate.stats;
+  const rows = [
+    ["Charisma", stats.charisma], ["Discipline", stats.discipline],
+    ["Authenticity", stats.authenticity], ["Policy", stats.policy],
+    ["Debate", stats.debate], ["Local Cred", stats.localCred],
+    ["Stamina", stats.stamina], ["Gaffe Res", stats.gaffeRes],
+  ];
+  const wrap = el("candidateStats");
+  wrap.innerHTML = "";
+  for(const [k,v] of rows){
+    const box = document.createElement("div");
+    box.className = "box";
+    box.innerHTML = `<div class="lbl">${k}</div><div class="val">${v}</div>`;
+    wrap.appendChild(box);
+  }
+}
+
+function renderSelectors(){
+  // districts
+  const sd = el("selDistrict");
+  sd.innerHTML = "";
+  for(const d of GAME.districts){
+    const opt = document.createElement("option");
+    opt.value = d.name;
+    opt.textContent = `${d.name} (${fmt(d.voters)} voters)`;
+    sd.appendChild(opt);
+  }
+}
+
+function renderDistrictPanel(){
+  const d = GAME.districts.find(x=>x.name===el("selDistrict").value) || GAME.districts[0];
+  el("districtTitle").textContent = d.name;
+
+  const topIssue = issueByKey(d.topIssueKey)?.name ?? "—";
+  const s = d.latent.support;
+
+  const rows = [
+    ["Voters", fmt(d.voters)],
+    ["Skew", d.skew],
+    ["Top local issue", topIssue],
+    ["Turnout (true latent)", pct(d.latent.turnout)],
+    ["Awareness (You)", pct(d.latent.awarenessYou)],
+    ["Trust (You)", pct(d.latent.trustYou)],
+    ["Support (You)", pct(s.you)],
+    ["Support (Con)", pct(s.con)],
+    ["Support (Lab)", pct(s.lab)],
+    ["Support (Ind)", pct(s.ind)],
+    ["Contacts (doors / leaflets / social / press / gotv)", `${fmt(d.contact.doors)} / ${fmt(d.contact.leaflets)} / ${fmt(d.contact.socialImpressions)} / ${fmt(d.contact.pressHits)} / ${fmt(d.contact.gotvTouches)}`],
+  ];
+
+  const tb = el("districtStats");
+  tb.innerHTML = "";
+  for(const [k,v] of rows){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<th>${k}</th><td class="right">${v}</td>`;
+    tb.appendChild(tr);
+  }
+
+  const hist = el("districtHistory");
+  if(d.history.length === 0){
+    hist.textContent = "No activity yet.";
+  } else {
+    hist.textContent = d.history.slice(-10).map(h=>{
+      const issue = issueByKey(h.issueKey)?.name ?? h.issueKey;
+      const b = h.backlash ? " ⚠ backlash" : "";
+      return `W${h.week}: ${h.action} • ${issue} • ${h.tone}/${h.frame} • int ${h.intensity} • shift ${(h.shift*100).toFixed(2)}pp • turnout +${(h.turnoutBoost*100).toFixed(2)}pp${b}`;
+    }).join("\n");
+  }
+}
+
+function renderAllDistricts(){
+  const tb = el("allDistricts");
+  tb.innerHTML = "";
+  for(const d of GAME.districts){
+    const s = d.latent.support;
+    const top = issueByKey(d.topIssueKey)?.name ?? d.topIssueKey;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${d.name}</td>
+      <td class="right">${fmt(d.voters)}</td>
+      <td class="right">${(d.latent.turnout*100).toFixed(1)}%</td>
+      <td class="right"><b>${(s.you*100).toFixed(1)}%</b></td>
+      <td class="right">${(s.con*100).toFixed(1)}%</td>
+      <td class="right">${(s.lab*100).toFixed(1)}%</td>
+      <td class="right">${(s.ind*100).toFixed(1)}%</td>
+      <td>${top}</td>
+    `;
+    tb.appendChild(tr);
+  }
+}
+
+let LAST_POLL = null;
+function renderPoll(){
+  const tb = el("pollTable");
+  tb.innerHTML = "";
+
+  const truthLV = computeLikelyVoterTotals();
+  const poll = LAST_POLL ?? noisyPollFromTruth(truthLV);
+
+  const rows = [
+    { name: GAME.candidate.name, pct: poll.support.you, note: "Your campaign" },
+    { name: "Margaret Holloway (Con)", pct: poll.support.con, note: "Incumbent advantage possible" },
+    { name: "Liam Carter (Lab)", pct: poll.support.lab, note: "Ground game pressure" },
+    { name: "Nadia Rahman (Ind)", pct: poll.support.ind, note: "Local issue wildcard" },
+  ].sort((a,b)=>b.pct-a.pct);
+
+  for(const r of rows){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${r.name}</td><td class="right">${(r.pct*100).toFixed(1)}</td><td class="muted">${r.note}</td>`;
+    tb.appendChild(tr);
+  }
+  el("pollMeta").textContent = `n=${poll.n} • MoE≈±${(poll.moE*100).toFixed(1)}pp • est turnout ${(poll.turnout*100).toFixed(1)}%`;
+  el("pollCaveat").textContent = "Polling is noisy and lags reality. Your canvass returns can disagree with polls. That’s intended.";
+}
+
+function renderBudgets(){
+  const late = GAME.week >= Math.floor(GAME.totalWeeks*0.75);
+  const a = el("selAction").value;
+  // show quick indicative costs
+  const i = parseInt(el("rngIntensity").value,10);
+  const costs = {
+    canvass: { money: 20, vol: 18*i, energy: 6+i },
+    leaflet: { money: 120*i, vol: 10*i, energy: 2+Math.floor(i/2) },
+    social: { money: 90*i, vol: 2, energy: 2 },
+    press: { money: 0, vol: 0, energy: 10+i },
+    gotv: { money: 40, vol: 16*i, energy: 7+i },
+  }[a];
+  el("actionBudgetTag").textContent = `Cost: £${costs.money} • Vol ${costs.vol} • Energy ${costs.energy}${(a==="gotv" && !late) ? " • (locked)" : ""}`;
+  el("weekNotes").textContent = a==="attack" ? "High risk" : "";
+}
+
+function appendEventLog(lines){
+  const box = el("eventLog");
+  const existing = box.textContent === "—" ? "" : box.textContent + "\n";
+  box.textContent = (existing + lines.join("\n")).trim() || "—";
+}
+
+/* ---------- Turn Flow ---------- */
+function executeActionClick(){
+  const action = el("selAction").value;
+  const districtName = el("selDistrict").value;
+  const issueKey = el("selIssue").value;
+  const frame = el("selFrame").value;
+  const tone = el("selTone").value;
+  const intensity = parseInt(el("rngIntensity").value,10);
+
+  const res = applyAction({ action, districtName, issueKey, frame, tone, intensity });
+  if(!res.ok){
+    alert(res.msg);
+    return;
+  }
+
+  // Log the action outcome
+  const issue = issueByKey(issueKey).name;
+  const b = res.backlash ? ` ⚠ Backlash (p≈${Math.round(res.backlashP*100)}%)` : "";
+  const line = `W${GAME.week} ACTION: ${action} @ ${districtName} • ${issue} • ${tone}/${frame} int${intensity} ⇒ shift ${(res.shift*100).toFixed(2)}pp, turnout +${(res.turnoutBoost*100).toFixed(2)}pp${b}`;
+  appendEventLog([line]);
+
+  // Poll becomes stale until run again (unless you want automatic weekly polling)
+  LAST_POLL = null;
+
+  rerender();
+}
+
+function runInternalPoll(){
+  const cost = 250;
+  if(GAME.resources.money < cost){ alert("Not enough money for a poll."); return; }
+  GAME.resources.money -= cost;
+
+  const truthLV = computeLikelyVoterTotals();
+  LAST_POLL = noisyPollFromTruth(truthLV);
+
+  appendEventLog([`W${GAME.week} INTERNAL POLL: fielded (n=${LAST_POLL.n}) • MoE≈±${(LAST_POLL.moE*100).toFixed(1)}pp.`]);
+  rerender();
+}
+
+function advanceWeek(){
+  // 1) Opponents act
+  opponentPhase();
+
+  // 2) Events happen
+  const ev = eventsPhase();
+  if(ev.length) appendEventLog(ev);
+
+  // 3) Saturation decays
+  decaySaturation();
+
+  // 4) Refresh resources (fundraising/recruitment)
+  const inc = refreshWeeklyResources();
+  appendEventLog([`W${GAME.week} WRAP: +£${fmt(inc.fund)} fundraising • +${fmt(inc.vols)} volunteer hours • +${fmt(inc.energyRegen)} energy.`]);
+
+  // 5) Next week
+  GAME.week += 1;
+  if(GAME.week > GAME.totalWeeks){
+    endElection();
+    return;
+  }
+
+  // New snapshot for reset button
+  snapshotWeek();
+
+  // Poll becomes stale
+  LAST_POLL = null;
+
+  rerender();
+}
+
+function endElection(){
+  // Simulate election outcome from latent support & turnout per district
+  // Winner = highest vote share among those who turn out.
+  const totals = { you:0, con:0, lab:0, ind:0 };
+  let votesCast = 0;
+
+  for(const d of GAME.districts){
+    const cast = Math.round(d.voters * d.latent.turnout);
+    votesCast += cast;
+    totals.you += Math.round(cast * d.latent.support.you);
+    totals.con += Math.round(cast * d.latent.support.con);
+    totals.lab += Math.round(cast * d.latent.support.lab);
+    totals.ind += Math.round(cast * d.latent.support.ind);
+  }
+
+  const arr = [
+    ["You", totals.you],
+    ["Con", totals.con],
+    ["Lab", totals.lab],
+    ["Ind", totals.ind]
+  ].sort((a,b)=>b[1]-a[1]);
+
+  const winner = arr[0][0];
+  const margin = arr[0][1] - arr[1][1];
+
+  const msg =
+`ELECTION RESULT — ${GAME.ward.name}
+Votes cast: ${fmt(votesCast)} (turnout ${(votesCast/GAME.ward.electorate*100).toFixed(1)}%)
+
+You: ${fmt(totals.you)}
+Con: ${fmt(totals.con)}
+Lab: ${fmt(totals.lab)}
+Ind: ${fmt(totals.ind)}
+
+Winner: ${winner} by ${fmt(margin)} votes.`;
+
+  appendEventLog(["—".repeat(30), msg, "Campaign complete. Refresh to play again (or extend the prototype)."]);
+  el("btnNext").disabled = true;
+  el("btnDoAction").disabled = true;
+  el("btnPoll").disabled = true;
+  alert(msg);
+}
+
+function rerender(){
+  renderHeader();
+  renderKPIs();
+  renderIssues();
+  renderCandidateStats();
+  renderSelectors();
+  renderDistrictPanel();
+  renderAllDistricts();
+  renderPoll();
+  renderBudgets();
+}
+
+/* ---------- Init ---------- */
+function init(){
+  makeDistricts();
+  snapshotWeek();
+
+  // wire up
+  el("selDistrict").addEventListener("change", renderDistrictPanel);
+  el("selAction").addEventListener("change", () => { renderBudgets(); });
+  el("selTone").addEventListener("change", renderBudgets);
+  el("selIssue").addEventListener("change", renderBudgets);
+  el("rngIntensity").addEventListener("input", renderBudgets);
+
+  el("btnDoAction").addEventListener("click", executeActionClick);
+  el("btnResetWeek").addEventListener("click", () => { restoreWeek(); rerender(); });
+  el("btnNext").addEventListener("click", advanceWeek);
+  el("btnPoll").addEventListener("click", runInternalPoll);
+
+  // initial poll
+  LAST_POLL = noisyPollFromTruth(computeLikelyVoterTotals());
+  appendEventLog([`W1: Campaign begins in ${GAME.ward.name}. Initial internal poll available.`]);
+
+  rerender();
+}
+
+init();
 </script>
 </body>
 </html>
