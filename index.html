@@ -1,973 +1,281 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ward Manager (UK) — Segments & Crosstabs (5 Districts)</title>
-  <style>
-    :root{
-      color-scheme: light dark;
-      --bg: Canvas;
-      --fg: CanvasText;
-      --muted: color-mix(in oklab, var(--fg) 65%, transparent);
-      --line: color-mix(in oklab, var(--fg) 18%, transparent);
-      --line2: color-mix(in oklab, var(--fg) 10%, transparent);
-      --card: color-mix(in oklab, var(--bg) 92%, var(--fg) 8%);
-      --card2: color-mix(in oklab, var(--bg) 96%, var(--fg) 4%);
-      --shadow: 0 10px 30px color-mix(in oklab, black 15%, transparent);
-      --radius: 14px;
-      --radius2: 18px;
-      --pad: 14px;
-      --pad2: 18px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
-    }
-    *{ box-sizing: border-box; }
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--fg);
-    }
-
-    /* App bar */
-    .appbar{
-      position: sticky; top:0; z-index: 10;
-      backdrop-filter: blur(10px);
-      background: color-mix(in oklab, var(--bg) 82%, transparent);
-      border-bottom: 1px solid var(--line);
-    }
-    .appbar-inner{
-      display:flex; align-items:center; gap:14px;
-      padding: 14px 16px;
-      max-width: 1280px;
-      margin: 0 auto;
-    }
-    .brand{
-      display:flex; flex-direction:column; gap:2px;
-      min-width: 220px;
-    }
-    .brand .title{ font-weight: 800; letter-spacing: .2px; }
-    .brand .sub{ font-size: 12px; color: var(--muted); }
-
-    .pill{
-      border:1px solid var(--line);
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 12px;
-      color: var(--muted);
-      background: color-mix(in oklab, var(--card) 70%, transparent);
-      white-space: nowrap;
-    }
-    .spacer{ flex:1; }
-    .btn{
-      border:1px solid var(--line);
-      background: color-mix(in oklab, var(--card) 75%, transparent);
-      border-radius: 12px;
-      padding: 10px 12px;
-      cursor: pointer;
-      font-weight: 650;
-    }
-    .btn:hover{ filter: brightness(1.04); }
-    .btn:disabled{ opacity:.45; cursor:not-allowed; }
-    .btn.secondary{
-      background: transparent;
-      font-weight: 650;
-    }
-
-    /* Layout */
-    .wrap{
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 16px;
-      display:grid;
-      grid-template-columns: 330px 1fr;
-      gap: 14px;
-      align-items: start;
-    }
-
-    /* Left rail */
-    .rail{
-      position: sticky; top: 76px;
-      display:flex; flex-direction: column; gap: 12px;
-    }
-
-    .card{
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius2);
-      box-shadow: none;
-      overflow: hidden;
-    }
-    .card .hd{
-      padding: var(--pad2);
-      border-bottom: 1px solid var(--line2);
-      display:flex; align-items: baseline; gap: 10px;
-    }
-    .card .hd .h{
-      font-weight: 800;
-      letter-spacing: .2px;
-    }
-    .card .hd .s{
-      margin-left:auto;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .card .bd{ padding: var(--pad2); }
-
-    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .kpi{
-      border: 1px solid var(--line2);
-      background: var(--card2);
-      border-radius: var(--radius);
-      padding: 12px;
-    }
-    .kpi .l{ font-size: 11px; color: var(--muted); }
-    .kpi .v{ font-size: 18px; font-weight: 850; margin-top: 2px; }
-
-    label{ font-size: 12px; color: var(--muted); display:block; margin-bottom:6px; }
-    select, input{
-      width: 100%;
-      border: 1px solid var(--line);
-      background: color-mix(in oklab, var(--card2) 78%, transparent);
-      border-radius: 12px;
-      padding: 10px 12px;
-      color: var(--fg);
-      outline: none;
-    }
-    .row{ display:flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .muted{ color: var(--muted); }
-    .small{ font-size: 12px; }
-
-    /* Tabs */
-    .tabs{
-      display:flex; gap: 8px;
-      padding: 10px;
-      border-bottom: 1px solid var(--line2);
-      background: color-mix(in oklab, var(--card2) 70%, transparent);
-    }
-    .tab{
-      border: 1px solid var(--line);
-      background: transparent;
-      border-radius: 999px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-weight: 750;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .tab.active{
-      background: color-mix(in oklab, var(--card) 65%, transparent);
-      color: var(--fg);
-    }
-
-    .panel{ display:none; padding: var(--pad2); }
-    .panel.active{ display:block; }
-
-    /* Topline bars */
-    .bars{ display:flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-    .barrow{ display:grid; grid-template-columns: 190px 1fr 70px; gap: 10px; align-items: center; }
-    .barname{ font-weight: 700; }
-    .bartrack{
-      height: 12px;
-      border-radius: 999px;
-      border: 1px solid var(--line2);
-      background: color-mix(in oklab, var(--bg) 80%, transparent);
-      overflow:hidden;
-    }
-    .barfill{
-      height: 100%;
-      width: 0%;
-      border-radius: 999px;
-      background: color-mix(in oklab, var(--fg) 25%, transparent);
-    }
-    .barpct{ text-align: right; font-family: var(--mono); font-size: 12px; color: var(--muted); }
-
-    /* Tables */
-    table{ width:100%; border-collapse: collapse; }
-    th, td{
-      padding: 10px 8px;
-      border-bottom: 1px solid var(--line2);
-      font-size: 13px;
-      text-align: left;
-    }
-    th{ font-size: 12px; color: var(--muted); font-weight: 750; }
-    td.r, th.r{ text-align:right; }
-    .mono{ font-family: var(--mono); }
-
-    /* Segment grid */
-    .seggrid{
-      display:grid;
-      grid-template-columns: 130px repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      align-items: stretch;
-      margin-top: 10px;
-    }
-    .seghead{
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 800;
-      padding: 6px 4px;
-    }
-    .segr{
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 800;
-      padding: 10px 4px;
-      display:flex;
-      align-items:center;
-    }
-    .segcell{
-      border: 1px solid var(--line);
-      background: var(--card2);
-      border-radius: var(--radius);
-      padding: 12px;
-      min-height: 88px;
-    }
-    .segcell .top{
-      display:flex; align-items:center; gap: 8px; justify-content: space-between;
-    }
-    .badge{
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      padding: 3px 8px;
-      font-size: 11px;
-      color: var(--muted);
-      background: color-mix(in oklab, var(--card) 55%, transparent);
-      white-space: nowrap;
-    }
-    .segcell .m{
-      margin-top: 8px;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.25;
-    }
-    .lead{
-      font-weight: 900;
-      letter-spacing: .2px;
-    }
-
-    /* Responsive */
-    @media (max-width: 1040px){
-      .wrap{ grid-template-columns: 1fr; }
-      .rail{ position: static; }
-      .seggrid{ grid-template-columns: 110px repeat(3, minmax(0,1fr)); }
-      .barrow{ grid-template-columns: 150px 1fr 60px; }
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Ward Manager (UK)</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --bg: Canvas;
+  --fg: CanvasText;
+  --muted: color-mix(in oklab, var(--fg) 65%, transparent);
+  --line: color-mix(in oklab, var(--fg) 18%, transparent);
+  --card: color-mix(in oklab, var(--bg) 92%, var(--fg) 8%);
+  --accent: color-mix(in oklab, var(--fg) 80%, transparent);
+  --radius: 14px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background:var(--bg);
+  color:var(--fg);
+}
+header{
+  border-bottom:1px solid var(--line);
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+header h1{font-size:16px;margin:0;font-weight:900}
+nav{display:flex;gap:8px}
+nav button{
+  border:1px solid var(--line);
+  background:transparent;
+  border-radius:999px;
+  padding:6px 12px;
+  font-weight:700;
+  cursor:pointer;
+  color:var(--muted);
+}
+nav button.active{
+  background:var(--card);
+  color:var(--fg);
+}
+main{max-width:1200px;margin:0 auto;padding:16px}
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:14px;
+  margin-bottom:14px;
+}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+h2{margin:0 0 6px 0;font-size:18px}
+.small{font-size:12px;color:var(--muted)}
+button.action{
+  border:1px solid var(--line);
+  background:transparent;
+  border-radius:10px;
+  padding:10px 12px;
+  font-weight:700;
+  cursor:pointer;
+}
+button.action:hover{filter:brightness(1.05)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}
+th{color:var(--muted)}
+.log{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap}
+.hidden{display:none}
+.badge{
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:2px 8px;
+  font-size:11px;
+  color:var(--muted);
+}
+.warn{color:#b00020}
+.good{color:#0a7}
+</style>
 </head>
 
 <body>
-  <div class="appbar">
-    <div class="appbar-inner">
-      <div class="brand">
-        <div class="title">Ward Manager (UK)</div>
-        <div class="sub">5 districts • Age×Housing segments • Noisy polls • Crosstabs</div>
-      </div>
-      <span class="pill" id="pillWard">—</span>
-      <span class="pill" id="pillWeek">—</span>
-      <span class="pill" id="pillModel">Model: LV</span>
-      <div class="spacer"></div>
-      <button class="btn secondary" id="btnAdvance">Advance Week ▶</button>
-      <button class="btn" id="btnPoll">Run Internal Poll</button>
+<header>
+  <h1>Ward Manager (UK)</h1>
+  <nav>
+    <button data-screen="hq" class="active">Campaign HQ</button>
+    <button data-screen="field">Field View</button>
+    <button data-screen="intel">Intel Room</button>
+  </nav>
+  <div class="spacer"></div>
+  <span class="badge" id="weekLabel"></span>
+</header>
+
+<main>
+
+<!-- CAMPAIGN HQ -->
+<section id="screen-hq">
+  <div class="card">
+    <h2>Resources</h2>
+    <div class="row">
+      <span>Money: <b id="money"></b></span>
+      <span>Volunteers: <b id="vols"></b></span>
+      <span>Energy: <b id="energy"></b></span>
     </div>
   </div>
 
-  <div class="wrap">
-    <!-- Left rail -->
-    <div class="rail">
-      <div class="card">
-        <div class="hd">
-          <div class="h">Ward controls</div>
-          <div class="s" id="metaWard">—</div>
-        </div>
-        <div class="bd">
-          <div class="grid2">
-            <div class="kpi">
-              <div class="l">Money</div>
-              <div class="v" id="kpiMoney">—</div>
-            </div>
-            <div class="kpi">
-              <div class="l">Volunteer hours</div>
-              <div class="v" id="kpiVol">—</div>
-            </div>
-            <div class="kpi">
-              <div class="l">Candidate energy</div>
-              <div class="v" id="kpiEnergy">—</div>
-            </div>
-            <div class="kpi">
-              <div class="l">Ethical debt</div>
-              <div class="v" id="kpiEthics">—</div>
-            </div>
-          </div>
-
-          <div style="height:12px"></div>
-
-          <label for="selDistrict">District</label>
-          <select id="selDistrict"></select>
-
-          <div style="height:12px"></div>
-
-          <div class="row">
-            <div style="flex:1 1 160px">
-              <label for="selModel">Poll model</label>
-              <select id="selModel">
-                <option value="lv" selected>Likely Voters (LV)</option>
-                <option value="rv">Registered Voters (RV)</option>
-              </select>
-            </div>
-            <div style="flex:1 1 160px">
-              <label for="selCrosstab">Crosstab</label>
-              <select id="selCrosstab">
-                <option value="age">Age</option>
-                <option value="housing">Housing</option>
-                <option value="ageHousing" selected>Age × Housing</option>
-              </select>
-            </div>
-          </div>
-
-          <div style="height:10px"></div>
-
-          <label for="selShow">Show in crosstabs</label>
-          <select id="selShow">
-            <option value="you" selected>Your support</option>
-            <option value="lead">Leader</option>
-            <option value="turnout">Turnout</option>
-          </select>
-
-          <div style="height:12px"></div>
-          <div class="small muted">
-            Tip: crosstabs are noisier than toplines (smaller effective sample). Use them for direction, not certainty.
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="hd">
-          <div class="h">System notes</div>
-          <div class="s mono" id="metaPoll">—</div>
-        </div>
-        <div class="bd">
-          <div class="small muted">
-            Each district contains 9 segments (3 age × 3 housing). Polls are generated from latent segment truth + noise.
-            This is UI scaffolding you can extend into full campaigning actions.
-          </div>
-        </div>
-      </div>
+  <div class="card">
+    <h2>Campaign Actions</h2>
+    <div class="row">
+      <button class="action" onclick="fundraise()">Fundraise</button>
+      <button class="action" onclick="leaflet()">Leaflet Drop</button>
+      <button class="action" onclick="canvass()">Door Knocking</button>
+      <button class="action" onclick="rest()">Rest Candidate</button>
     </div>
-
-    <!-- Main -->
-    <div class="card">
-      <div class="tabs">
-        <button class="tab active" data-tab="overview">Overview</button>
-        <button class="tab" data-tab="crosstabs">Crosstabs</button>
-        <button class="tab" data-tab="district">District</button>
-      </div>
-
-      <!-- OVERVIEW -->
-      <div class="panel active" id="panel-overview">
-        <div class="row">
-          <div>
-            <div class="small muted">Topline (latest poll)</div>
-            <div style="font-weight:900; font-size:18px">Likely voters snapshot</div>
-          </div>
-          <div class="spacer"></div>
-          <span class="pill" id="pillTurnout">Turnout —</span>
-        </div>
-
-        <div class="bars" id="toplineBars"></div>
-
-        <div style="height:14px"></div>
-
-        <div class="card" style="box-shadow:none">
-          <div class="hd">
-            <div class="h">District summary (latent)</div>
-            <div class="s">Use this for targeting; polls may disagree.</div>
-          </div>
-          <div class="bd">
-            <table>
-              <thead>
-                <tr>
-                  <th>District</th>
-                  <th class="r">Voters</th>
-                  <th class="r">Turnout</th>
-                  <th class="r">You</th>
-                  <th class="r">Con</th>
-                  <th class="r">Lab</th>
-                  <th class="r">Ind</th>
-                  <th>Profile</th>
-                </tr>
-              </thead>
-              <tbody id="districtTable"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- CROSSTABS -->
-      <div class="panel" id="panel-crosstabs">
-        <div class="row">
-          <div>
-            <div class="small muted">Crosstabs</div>
-            <div style="font-weight:900; font-size:18px" id="crossTitle">—</div>
-          </div>
-          <div class="spacer"></div>
-          <span class="pill" id="crossPill">—</span>
-        </div>
-
-        <div style="height:12px"></div>
-
-        <table>
-          <thead id="crossHead"></thead>
-          <tbody id="crossBody"></tbody>
-        </table>
-
-        <div style="height:12px"></div>
-        <div class="small muted" id="crossNote">—</div>
-      </div>
-
-      <!-- DISTRICT -->
-      <div class="panel" id="panel-district">
-        <div class="row">
-          <div>
-            <div class="small muted">District segments</div>
-            <div style="font-weight:900; font-size:18px" id="districtTitle">—</div>
-            <div class="small muted" id="districtMeta">—</div>
-          </div>
-          <div class="spacer"></div>
-          <span class="pill" id="districtPill">—</span>
-        </div>
-
-        <div class="seggrid" id="segGrid"></div>
-
-        <div style="height:10px"></div>
-        <div class="small muted">
-          Each cell is one segment (Age × Housing). This is what you’d target with leaflets/ads/canvass in the full game.
-        </div>
-      </div>
-
-    </div>
+    <div class="small">Actions affect specific voter segments and generate delayed effects.</div>
   </div>
+
+  <div class="card">
+    <h2>Volunteer Roster</h2>
+    <table>
+      <thead><tr><th>Name</th><th>Skill</th><th>Burnout</th><th>Status</th></tr></thead>
+      <tbody id="volTable"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FIELD VIEW -->
+<section id="screen-field" class="hidden">
+  <div class="card">
+    <h2>Districts & Segments</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>District</th>
+          <th>Key Segment</th>
+          <th>Your Support</th>
+          <th>Turnout Risk</th>
+        </tr>
+      </thead>
+      <tbody id="districtTable"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- INTEL ROOM -->
+<section id="screen-intel" class="hidden">
+  <div class="card">
+    <h2>Polling Summary</h2>
+    <div id="pollSummary"></div>
+    <div class="small">Polling is noisy and lags reality.</div>
+  </div>
+
+  <div class="card">
+    <h2>Recent Effects</h2>
+    <div class="log" id="effectsLog"></div>
+  </div>
+
+  <div class="card">
+    <h2>Rumours & Whispers</h2>
+    <div class="log" id="rumourLog"></div>
+  </div>
+</section>
+
+</main>
 
 <script>
-/* ---------- Utils ---------- */
-const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
-const rnd = (a=0,b=1)=>a+Math.random()*(b-a);
-const irnd = (a,b)=>Math.floor(rnd(a,b+1));
-const pick = (arr)=>arr[Math.floor(Math.random()*arr.length)];
-const fmt = (n)=>n.toLocaleString('en-GB');
-const pct = (x)=>`${(x*100).toFixed(1)}%`;
-
-/* ---------- Constants ---------- */
-const AGE = ["18–34","35–54","55+"];
-const HOUSING = ["Owner","Private renter","Social renter"];
-const CANDS = ["you","con","lab","ind"];
-const CAND_LABEL = {
-  you: "You (Residents)",
-  con: "Conservative",
-  lab: "Labour",
-  ind: "Independent"
+/* CORE STATE */
+const GAME={
+  week:1,
+  money:5000,
+  energy:80,
+  volunteers:[
+    {name:"Anna",skill:0.7,burnout:0},
+    {name:"Dave",skill:0.5,burnout:0},
+    {name:"Leila",skill:0.8,burnout:0}
+  ],
+  districts:[
+    {name:"Riverside Estate",segment:"Young renters",support:0.22,turnout:0.32},
+    {name:"Old Greybridge",segment:"Older owners",support:0.26,turnout:0.64},
+    {name:"Kingsway Newbuilds",segment:"Young professionals",support:0.30,turnout:0.42},
+    {name:"St. Mark’s Village",segment:"Older owners",support:0.18,turnout:0.66},
+    {name:"Industrial Crescent",segment:"Working families",support:0.28,turnout:0.38},
+  ],
+  rumours:[],
+  effects:[]
 };
 
-/* ---------- Game state ---------- */
-const GAME = {
-  ward: { name:"Greybridge North", council:"Unitary Authority (England)", electorate:9180, population:12400 },
-  week: 1,
-  totalWeeks: 24,
-  resources: { money: 6200, vol: 110, energy: 85, ethics: 0 },
-  districts: [],
-  lastPoll: null
-};
-
-/* ---------- District + segment generation (5 districts) ---------- */
-function genDistricts(){
-  const templates = [
-    { name:"Riverside Estate", voters: 1750, baseTurnout:0.36, profile:"working" },
-    { name:"Old Greybridge", voters: 1500, baseTurnout:0.62, profile:"older" },
-    { name:"Kingsway Newbuilds", voters: 2100, baseTurnout:0.44, profile:"young" },
-    { name:"St. Mark’s Village", voters: 1250, baseTurnout:0.64, profile:"conservative" },
-    { name:"Industrial Crescent", voters: 1580, baseTurnout:0.40, profile:"union" },
-  ];
-
-  const wardBase = { you:0.27, con:0.33, lab:0.30, ind:0.10 };
-
-  function profileMix(profile){
-    let ageW, houseW;
-    if(profile==="older"){
-      ageW = [0.16,0.30,0.54];
-      houseW = [0.74,0.18,0.08];
-    } else if(profile==="young"){
-      ageW = [0.58,0.28,0.14];
-      houseW = [0.28,0.54,0.18];
-    } else if(profile==="working"){
-      ageW = [0.42,0.34,0.24];
-      houseW = [0.22,0.28,0.50];
-    } else if(profile==="conservative"){
-      ageW = [0.18,0.35,0.47];
-      houseW = [0.80,0.15,0.05];
-    } else if(profile==="union"){
-      ageW = [0.30,0.46,0.24];
-      houseW = [0.38,0.26,0.36];
-    } else {
-      ageW = [0.33,0.37,0.30];
-      houseW = [0.46,0.30,0.24];
-    }
-    return { ageW, houseW };
-  }
-
-  function leanBySegment(ageIdx, houseIdx, profile){
-    const d = { you:0, con:0, lab:0, ind:0 };
-
-    // Housing base
-    if(houseIdx===0) d.con += 0.030; // owners
-    if(houseIdx===1) { d.you += 0.015; d.lab += 0.010; d.con -= 0.020; }
-    if(houseIdx===2) { d.lab += 0.030; d.you += 0.010; d.con -= 0.030; }
-
-    // Age base
-    if(ageIdx===0) { d.you += 0.020; d.ind += 0.006; d.con -= 0.014; }
-    if(ageIdx===2) { d.con += 0.018; d.you -= 0.006; }
-
-    // District profile overlay
-    if(profile==="older") d.con += 0.020;
-    if(profile==="young") d.you += 0.014;
-    if(profile==="working") d.lab += 0.018;
-    if(profile==="union") d.lab += 0.030;
-    if(profile==="conservative") d.con += 0.036;
-
-    return d;
-  }
-
-  function segTurnout(ageIdx, houseIdx, baseTurnout){
-    let t = baseTurnout;
-    if(ageIdx===2) t += 0.08;
-    if(ageIdx===0) t -= 0.05;
-    if(houseIdx===0) t += 0.05;
-    if(houseIdx===2) t -= 0.06;
-    return clamp(t + rnd(-0.02,0.02), 0.18, 0.78);
-  }
-
-  GAME.districts = templates.map(t=>{
-    const { ageW, houseW } = profileMix(t.profile);
-    const segments = [];
-
-    for(let ai=0; ai<AGE.length; ai++){
-      for(let hi=0; hi<HOUSING.length; hi++){
-        const sizeShare = ageW[ai]*houseW[hi];
-        const delta = leanBySegment(ai,hi,t.profile);
-        let s = {
-          you: wardBase.you + delta.you + rnd(-0.01,0.01),
-          con: wardBase.con + delta.con + rnd(-0.01,0.01),
-          lab: wardBase.lab + delta.lab + rnd(-0.01,0.01),
-          ind: wardBase.ind + delta.ind + rnd(-0.006,0.006),
-        };
-        for(const k of CANDS) s[k] = clamp(s[k], 0.02, 0.90);
-        const sum = s.you+s.con+s.lab+s.ind;
-        for(const k of CANDS) s[k] /= sum;
-
-        segments.push({
-          ageIdx: ai,
-          houseIdx: hi,
-          size: Math.round(t.voters * sizeShare),
-          turnout: segTurnout(ai,hi,t.baseTurnout),
-          support: s
-        });
-      }
-    }
-
-    // Fix rounding drift to exact voters
-    let total = segments.reduce((a,x)=>a+x.size,0);
-    let drift = t.voters - total;
-    while(drift !== 0){
-      const seg = pick(segments);
-      const step = drift > 0 ? 1 : -1;
-      if(seg.size + step >= 0){ seg.size += step; drift -= step; }
-    }
-
-    return { name:t.name, voters:t.voters, profile:t.profile, baseTurnout:t.baseTurnout, segments };
-  });
-}
-
-/* ---------- Aggregation ---------- */
-function aggDistrict(d){
-  let voters=0, turnout=0;
-  const totals = { you:0, con:0, lab:0, ind:0 };
-  for(const seg of d.segments){
-    voters += seg.size;
-    turnout += seg.turnout * seg.size;
-    for(const k of CANDS) totals[k] += seg.support[k] * seg.size;
-  }
-  for(const k of CANDS) totals[k] /= voters;
-  turnout /= voters;
-  return { voters, turnout, support: totals };
-}
-
-function aggWard(model="lv"){
-  let wSum=0, turnout=0;
-  const totals = { you:0, con:0, lab:0, ind:0 };
-  for(const d of GAME.districts){
-    for(const seg of d.segments){
-      const w = (model==="lv") ? seg.size*(0.5 + seg.turnout) : seg.size;
-      wSum += w;
-      turnout += seg.turnout * w;
-      for(const k of CANDS) totals[k] += seg.support[k] * w;
-    }
-  }
-  for(const k of CANDS) totals[k] /= wSum;
-  turnout /= wSum;
-  return { support: totals, turnout };
-}
-
-/* ---------- Polling ---------- */
-function makePoll(model){
-  const truth = aggWard(model);
-  const n = irnd(420, 820);
-  const moE = 1.96 * Math.sqrt(0.25 / n);
-  const house = { you:rnd(-0.010,0.010), con:rnd(-0.012,0.012), lab:rnd(-0.012,0.012), ind:rnd(-0.008,0.008) };
-
-  const vals = { ...truth.support };
-  for(const k of CANDS){
-    vals[k] = clamp(vals[k] + rnd(-moE, moE) + house[k], 0.01, 0.85);
-  }
-  const sum = vals.you+vals.con+vals.lab+vals.ind;
-  for(const k of CANDS) vals[k] /= sum;
-
-  return {
-    model, n, moE,
-    support: vals,
-    turnout: clamp(truth.turnout + rnd(-0.03,0.03), 0.22, 0.70)
+/* UI NAV */
+document.querySelectorAll("nav button").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
+    document.getElementById("screen-"+b.dataset.screen).classList.remove("hidden");
   };
-}
+});
 
-/* ---------- Crosstabs ---------- */
-function showLabel(show){
-  if(show==="you") return "You";
-  if(show==="lead") return "Leader";
-  return "Turnout";
-}
-
-function crosstab(kind, show, model){
-  const noise = ()=>rnd(-0.02,0.02);
-
-  // helpers to aggregate with condition
-  function aggWhere(condFn){
-    let wSum=0, turnout=0;
-    const totals = { you:0, con:0, lab:0, ind:0 };
-    for(const d of GAME.districts){
-      for(const seg of d.segments){
-        if(!condFn(seg)) continue;
-        const w = (model==="lv") ? seg.size*(0.5 + seg.turnout) : seg.size;
-        wSum += w;
-        turnout += seg.turnout * w;
-        for(const k of CANDS) totals[k] += seg.support[k] * w;
-      }
-    }
-    for(const k of CANDS) totals[k] /= wSum;
-    turnout /= wSum;
-    return { totals, turnout };
+/* ACTIONS */
+function fundraise(){
+  const gain=Math.floor(400+Math.random()*600);
+  GAME.money+=gain;
+  GAME.effects.push(`Fundraising brought in £${gain}.`);
+  if(Math.random()<0.25){
+    GAME.rumours.push("Rumour: campaign taking money from questionable local donors.");
   }
-
-  if(kind==="age"){
-    const rows = AGE.map((label, ai)=>{
-      const { totals, turnout } = aggWhere(seg=>seg.ageIdx===ai);
-      if(show==="lead"){
-        const noisy = { ...totals };
-        for(const k of CANDS) noisy[k] = clamp(noisy[k] + noise()*0.6, 0.01, 0.95);
-        const s = noisy.you+noisy.con+noisy.lab+noisy.ind;
-        for(const k of CANDS) noisy[k] /= s;
-        const lead = Object.entries(noisy).sort((a,b)=>b[1]-a[1])[0][0];
-        return { label, value: lead.toUpperCase() };
-      }
-      if(show==="turnout") return { label, value: pct(clamp(turnout + noise()*0.35, 0.18, 0.78)) };
-      return { label, value: pct(clamp(totals.you + noise(), 0.01, 0.95)) };
-    });
-    return { type:"list", head:["Group", showLabel(show)], rows };
-  }
-
-  if(kind==="housing"){
-    const rows = HOUSING.map((label, hi)=>{
-      const { totals, turnout } = aggWhere(seg=>seg.houseIdx===hi);
-      if(show==="lead"){
-        const noisy = { ...totals };
-        for(const k of CANDS) noisy[k] = clamp(noisy[k] + noise()*0.6, 0.01, 0.95);
-        const s = noisy.you+noisy.con+noisy.lab+noisy.ind;
-        for(const k of CANDS) noisy[k] /= s;
-        const lead = Object.entries(noisy).sort((a,b)=>b[1]-a[1])[0][0];
-        return { label, value: lead.toUpperCase() };
-      }
-      if(show==="turnout") return { label, value: pct(clamp(turnout + noise()*0.35, 0.18, 0.78)) };
-      return { label, value: pct(clamp(totals.you + noise(), 0.01, 0.95)) };
-    });
-    return { type:"list", head:["Group", showLabel(show)], rows };
-  }
-
-  // age×housing matrix
-  const matrix = [];
-  for(let ai=0; ai<AGE.length; ai++){
-    const row = [];
-    for(let hi=0; hi<HOUSING.length; hi++){
-      const { totals, turnout } = aggWhere(seg=>seg.ageIdx===ai && seg.houseIdx===hi);
-      if(show==="lead"){
-        const noisy = { ...totals };
-        for(const k of CANDS) noisy[k] = clamp(noisy[k] + noise()*0.6, 0.01, 0.95);
-        const s = noisy.you+noisy.con+noisy.lab+noisy.ind;
-        for(const k of CANDS) noisy[k] /= s;
-        const lead = Object.entries(noisy).sort((a,b)=>b[1]-a[1])[0][0];
-        row.push(lead.toUpperCase());
-      } else if(show==="turnout"){
-        row.push(pct(clamp(turnout + noise()*0.35, 0.18, 0.78)));
-      } else {
-        row.push(pct(clamp(totals.you + noise(), 0.01, 0.95)));
-      }
-    }
-    matrix.push(row);
-  }
-  return { type:"matrix", head:["Age \\ Housing", ...HOUSING], matrix };
+  endTurn();
 }
 
-/* ---------- UI helpers ---------- */
-const el = (id)=>document.getElementById(id);
-
-function setActiveTab(tabId){
-  document.querySelectorAll(".tab").forEach(b=>{
-    b.classList.toggle("active", b.dataset.tab===tabId);
-  });
-  document.querySelectorAll(".panel").forEach(p=>{
-    p.classList.toggle("active", p.id===`panel-${tabId}`);
-  });
+function leaflet(){
+  if(GAME.money<300){alert("Not enough money");return;}
+  GAME.money-=300;
+  const d=pick(GAME.districts);
+  d.support+=0.01;
+  GAME.effects.push(`Leaflets improved support in ${d.name} (${d.segment}).`);
+  endTurn();
 }
 
-/* ---------- Rendering ---------- */
-function renderPills(){
-  el("pillWard").textContent = `${GAME.ward.name}`;
-  el("pillWeek").textContent = `Week ${GAME.week}/${GAME.totalWeeks}`;
-  el("metaWard").textContent = `${GAME.ward.council}`;
-
-  el("kpiMoney").textContent = `£${fmt(GAME.resources.money)}`;
-  el("kpiVol").textContent = fmt(GAME.resources.vol);
-  el("kpiEnergy").textContent = fmt(GAME.resources.energy);
-  el("kpiEthics").textContent = fmt(Math.round(GAME.resources.ethics));
-}
-
-function ensureSelectors(){
-  const sd = el("selDistrict");
-  if(sd.options.length===0){
-    for(const d of GAME.districts){
-      const opt = document.createElement("option");
-      opt.value = d.name;
-      opt.textContent = `${d.name} (${fmt(d.voters)} voters)`;
-      sd.appendChild(opt);
-    }
+function canvass(){
+  if(GAME.energy<10){alert("Candidate exhausted");return;}
+  GAME.energy-=10;
+  const d=pick(GAME.districts);
+  const vol=pick(GAME.volunteers);
+  d.support+=0.015*vol.skill;
+  vol.burnout+=0.15;
+  GAME.effects.push(`Canvassing helped with ${d.segment} in ${d.name}.`);
+  if(vol.burnout>0.7){
+    GAME.rumours.push(`${vol.name} is burning out and complaining to others.`);
   }
+  endTurn();
 }
 
-function renderOverview(){
-  const model = el("selModel").value;
-  el("pillModel").textContent = `Model: ${model.toUpperCase()}`;
-  if(!GAME.lastPoll) GAME.lastPoll = makePoll(model);
+function rest(){
+  GAME.energy=Math.min(100,GAME.energy+20);
+  GAME.effects.push("Candidate rested. Energy restored.");
+  endTurn();
+}
 
-  const poll = GAME.lastPoll;
-  el("metaPoll").textContent = `n=${poll.n} • MoE≈±${(poll.moE*100).toFixed(1)}pp`;
-  el("pillTurnout").textContent = `Est turnout ${(poll.turnout*100).toFixed(1)}%`;
+/* TURN */
+function endTurn(){
+  GAME.week++;
+  render();
+}
 
-  // topline bars
-  const rows = [
-    { k:"you", label:CAND_LABEL.you, note:"Your campaign" },
-    { k:"con", label:CAND_LABEL.con, note:"Incumbent pull" },
-    { k:"lab", label:CAND_LABEL.lab, note:"Ground pressure" },
-    { k:"ind", label:CAND_LABEL.ind, note:"Local wildcard" },
-  ].map(r=>({ ...r, p: poll.support[r.k] }))
-   .sort((a,b)=>b.p-a.p);
+/* RENDER */
+function render(){
+  weekLabel.textContent=`Week ${GAME.week}`;
+  money.textContent=`£${GAME.money}`;
+  energy.textContent=GAME.energy;
+  vols.textContent=GAME.volunteers.length;
 
-  const bars = el("toplineBars");
-  bars.innerHTML = "";
-  rows.forEach(r=>{
-    const div = document.createElement("div");
-    div.className = "barrow";
-    div.innerHTML = `
-      <div class="barname">${r.label}</div>
-      <div class="bartrack"><div class="barfill" style="width:${(r.p*100).toFixed(1)}%"></div></div>
-      <div class="barpct">${(r.p*100).toFixed(1)}%</div>
-    `;
-    bars.appendChild(div);
+  volTable.innerHTML="";
+  GAME.volunteers.forEach(v=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${v.name}</td><td>${Math.round(v.skill*100)}</td><td>${Math.round(v.burnout*100)}%</td><td>${v.burnout>0.8?"At risk":"OK"}</td>`;
+    volTable.appendChild(tr);
   });
 
-  // district summary (latent)
-  const tb = el("districtTable");
-  tb.innerHTML = "";
-  for(const d of GAME.districts){
-    const a = aggDistrict(d);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><b>${d.name}</b></td>
-      <td class="r mono">${fmt(d.voters)}</td>
-      <td class="r mono">${(a.turnout*100).toFixed(1)}%</td>
-      <td class="r mono"><b>${(a.support.you*100).toFixed(1)}%</b></td>
-      <td class="r mono">${(a.support.con*100).toFixed(1)}%</td>
-      <td class="r mono">${(a.support.lab*100).toFixed(1)}%</td>
-      <td class="r mono">${(a.support.ind*100).toFixed(1)}%</td>
-      <td class="muted">${d.profile}</td>
-    `;
-    tb.appendChild(tr);
-  }
-}
-
-function renderCrosstabs(){
-  const kind = el("selCrosstab").value;
-  const show = el("selShow").value;
-  const model = el("selModel").value;
-
-  el("crossTitle").textContent =
-    kind==="age" ? "By Age" :
-    kind==="housing" ? "By Housing" :
-    "Age × Housing";
-
-  el("crossPill").textContent = `Showing ${showLabel(show)} • ${model.toUpperCase()}`;
-  el("crossNote").textContent =
-    kind==="ageHousing"
-      ? "Matrix helps pick target segments: persuasion pockets vs GOTV pockets."
-      : "Use crosstabs to sanity-check whether you’re rising in the groups you’re actually targeting.";
-
-  const cross = crosstab(kind, show, model);
-  const head = el("crossHead");
-  const body = el("crossBody");
-  head.innerHTML = "";
-  body.innerHTML = "";
-
-  if(cross.type==="list"){
-    head.innerHTML = `<tr><th>${cross.head[0]}</th><th class="r">${cross.head[1]}</th></tr>`;
-    cross.rows.forEach(r=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${r.label}</td><td class="r mono">${r.value}</td>`;
-      body.appendChild(tr);
-    });
-  } else {
-    head.innerHTML = `<tr>${cross.head.map((h,i)=> i===0 ? `<th>${h}</th>` : `<th class="r">${h}</th>`).join("")}</tr>`;
-    for(let ai=0; ai<AGE.length; ai++){
-      const tr = document.createElement("tr");
-      let html = `<td>${AGE[ai]}</td>`;
-      for(let hi=0; hi<HOUSING.length; hi++){
-        html += `<td class="r mono">${cross.matrix[ai][hi]}</td>`;
-      }
-      tr.innerHTML = html;
-      body.appendChild(tr);
-    }
-  }
-}
-
-function renderDistrict(){
-  const name = el("selDistrict").value;
-  const d = GAME.districts.find(x=>x.name===name) || GAME.districts[0];
-  const a = aggDistrict(d);
-
-  el("districtTitle").textContent = d.name;
-  el("districtMeta").textContent = `Profile: ${d.profile} • Latent turnout ${pct(a.turnout)} • Latent you ${pct(a.support.you)}`;
-  el("districtPill").textContent = `${fmt(d.voters)} voters`;
-
-  const grid = el("segGrid");
-  grid.innerHTML = "";
-
-  // Header row
-  grid.appendChild(mkDiv("seghead", ""));
-  HOUSING.forEach(h=>grid.appendChild(mkDiv("seghead", h)));
-
-  // Rows
-  for(let ai=0; ai<AGE.length; ai++){
-    grid.appendChild(mkDiv("segr", AGE[ai]));
-    for(let hi=0; hi<HOUSING.length; hi++){
-      const seg = d.segments.find(s=>s.ageIdx===ai && s.houseIdx===hi);
-      const s = seg.support;
-      const lead = Object.entries(s).sort((x,y)=>y[1]-x[1])[0][0];
-      const leadTxt = lead==="you" ? "YOU lead" : `${lead.toUpperCase()} leads`;
-      const cell = document.createElement("div");
-      cell.className = "segcell";
-      cell.innerHTML = `
-        <div class="top">
-          <span class="lead">${leadTxt}</span>
-          <span class="badge">${fmt(seg.size)} voters</span>
-        </div>
-        <div class="m">
-          Turnout <b>${pct(seg.turnout)}</b><br/>
-          You <b>${(s.you*100).toFixed(1)}%</b> • Con ${(s.con*100).toFixed(1)}% • Lab ${(s.lab*100).toFixed(1)}% • Ind ${(s.ind*100).toFixed(1)}%
-        </div>
-      `;
-      grid.appendChild(cell);
-    }
-  }
-}
-
-function mkDiv(cls, txt){
-  const d = document.createElement("div");
-  d.className = cls;
-  d.textContent = txt;
-  return d;
-}
-
-function renderAll(){
-  renderPills();
-  ensureSelectors();
-  renderOverview();
-  renderCrosstabs();
-  renderDistrict();
-}
-
-/* ---------- Actions ---------- */
-function runPoll(){
-  GAME.lastPoll = makePoll(el("selModel").value);
-  renderAll();
-}
-
-function advanceWeek(){
-  GAME.week = Math.min(GAME.totalWeeks, GAME.week + 1);
-
-  // Light “life” drift for UI demo
-  GAME.resources.money += irnd(120, 360);
-  GAME.resources.vol += irnd(8, 22);
-  GAME.resources.energy = clamp(GAME.resources.energy + irnd(6, 14), 0, 100);
-  GAME.resources.ethics = Math.max(0, GAME.resources.ethics * 0.92);
-
-  // micro drift in segments
-  for(const d of GAME.districts){
-    for(const seg of d.segments){
-      seg.support.you = clamp(seg.support.you + rnd(-0.003,0.003), 0.01, 0.95);
-      seg.support.con = clamp(seg.support.con + rnd(-0.003,0.003), 0.01, 0.95);
-      seg.support.lab = clamp(seg.support.lab + rnd(-0.003,0.003), 0.01, 0.95);
-      seg.support.ind = clamp(seg.support.ind + rnd(-0.002,0.002), 0.01, 0.95);
-      const sum = seg.support.you+seg.support.con+seg.support.lab+seg.support.ind;
-      for(const k of CANDS) seg.support[k] /= sum;
-
-      seg.turnout = clamp(seg.turnout + rnd(-0.004,0.004), 0.18, 0.78);
-    }
-  }
-
-  // Poll goes stale unless re-run
-  GAME.lastPoll = null;
-
-  renderAll();
-}
-
-/* ---------- Init ---------- */
-function init(){
-  genDistricts();
-
-  // Tabs
-  document.querySelectorAll(".tab").forEach(btn=>{
-    btn.addEventListener("click", ()=> setActiveTab(btn.dataset.tab));
+  districtTable.innerHTML="";
+  GAME.districts.forEach(d=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${d.name}</td><td>${d.segment}</td><td>${Math.round(d.support*100)}%</td><td>${Math.round(d.turnout*100)}%</td>`;
+    districtTable.appendChild(tr);
   });
 
-  // Controls
-  el("btnPoll").addEventListener("click", runPoll);
-  el("btnAdvance").addEventListener("click", advanceWeek);
-
-  el("selDistrict").addEventListener("change", ()=>{ renderDistrict(); });
-  el("selModel").addEventListener("change", ()=>{ GAME.lastPoll = null; renderAll(); });
-  el("selCrosstab").addEventListener("change", renderCrosstabs);
-  el("selShow").addEventListener("change", renderCrosstabs);
-
-  // Initial poll so Overview isn't blank
-  GAME.lastPoll = makePoll("lv");
-  renderAll();
+  pollSummary.innerHTML=`You polling at ${(avgSupport()*100).toFixed(1)}% (est).`;
+  effectsLog.textContent=GAME.effects.slice(-6).join("\n")||"—";
+  rumourLog.textContent=GAME.rumours.slice(-6).join("\n")||"—";
 }
 
-init();
+function avgSupport(){
+  return GAME.districts.reduce((a,d)=>a+d.support,0)/GAME.districts.length;
+}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+
+render();
 </script>
 </body>
 </html>
