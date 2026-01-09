@@ -3,16 +3,19 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Council Manager — Prototype</title>
+  <title>Ward Lords — Prototype v0.2</title>
   <style>
-    :root { --bg:#0b1020; --panel:#121a33; --ink:#e9ecff; --muted:#aab2ff; --good:#66ffcc; --bad:#ff5a7a; --warn:#ffd36a; }
+    :root{
+      --bg:#0b1020; --panel:#121a33; --ink:#e9ecff; --muted:#aab2ff;
+      --good:#66ffcc; --bad:#ff5a7a; --warn:#ffd36a; --line:rgba(255,255,255,0.12);
+    }
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;background:linear-gradient(180deg,#060914,var(--bg));color:var(--ink);}
-    .wrap{max-width:1100px;margin:0 auto;padding:14px;}
+    .wrap{max-width:1200px;margin:0 auto;padding:14px;}
     header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
     h1{font-size:18px;margin:0}
-    .sub{color:var(--muted);font-size:13px;margin-top:2px}
-    .grid{display:grid;grid-template-columns:1.3fr .7fr;gap:10px}
-    .card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:12px}
+    .sub{color:var(--muted);font-size:13px;margin-top:2px;max-width:980px}
+    .grid{display:grid;grid-template-columns:1.35fr .65fr;gap:10px}
+    .card{background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:14px;padding:12px}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     button, select, input{
       background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:var(--ink);
@@ -21,25 +24,45 @@
     button:hover{background:rgba(255,255,255,0.12)}
     button:active{transform:translateY(1px)}
     button:disabled{opacity:.5;cursor:not-allowed}
-    .pill{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);padding:8px 10px;border-radius:12px}
+    .pill{background:rgba(255,255,255,0.06);border:1px solid var(--line);padding:8px 10px;border-radius:12px}
     .pill .k{color:var(--muted);font-size:12px}
-    .pill .v{font-variant-numeric:tabular-nums;font-weight:800}
-    .log{white-space:pre-wrap;line-height:1.35;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12.5px;max-height:560px;overflow:auto}
+    .pill .v{font-variant-numeric:tabular-nums;font-weight:900}
+    .log{white-space:pre-wrap;line-height:1.35;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:12.5px;max-height:520px;overflow:auto}
     table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{padding:6px 6px;border-bottom:1px solid rgba(255,255,255,0.10);text-align:left}
-    th{color:var(--muted);font-size:12px;font-weight:800}
+    th,td{padding:6px 6px;border-bottom:1px solid rgba(255,255,255,0.10);text-align:left;vertical-align:top}
+    th{color:var(--muted);font-size:12px;font-weight:900}
     .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
-    .small{font-size:12px;color:var(--muted)}
-    .hr{height:1px;background:rgba(255,255,255,0.12);margin:10px 0}
+    .small{font-size:12px;color:var(--muted);line-height:1.35}
+    .hr{height:1px;background:var(--line);margin:10px 0}
     .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);font-size:12px;color:var(--muted)}
+    .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .mapWrap{display:grid;grid-template-columns:1fr;gap:8px}
+    .mapLegend{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .dot{display:inline-block;width:10px;height:10px;border-radius:4px;margin-right:6px;vertical-align:middle}
+    .dot.civ{background:rgba(102,255,204,0.8)}
+    .dot.lab{background:rgba(255,211,106,0.8)}
+    .dot.grn{background:rgba(102,200,255,0.8)}
+    .dot.con{background:rgba(255,90,122,0.8)}
+    .wardTitle{font-weight:1000;font-size:14px;margin-bottom:4px}
+    .kbd{display:inline-block;padding:2px 7px;border-radius:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.14);font-size:12px;color:var(--ink)}
+    /* SVG map styling */
+    svg{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,0.03)}
+    .wardCell{cursor:pointer}
+    .wardCell rect{stroke:rgba(255,255,255,0.16);stroke-width:1}
+    .wardCell:hover rect{stroke:rgba(255,255,255,0.35);stroke-width:1.3}
+    .wardCell text{pointer-events:none;font-size:10px;fill:rgba(233,236,255,0.88);font-weight:800}
+    .selected rect{stroke:rgba(255,255,255,0.65) !important;stroke-width:2 !important}
   </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>Council Manager — Prototype (30 wards)</h1>
-      <div class="sub">Text-first vertical slice: election → formation → process-driven governance (budget + planning). Fictional parties & wards.</div>
+      <h1>Ward Lords — Prototype v0.2 (Characters + Clickable Map)</h1>
+      <div class="sub">
+        One fictional council, 30 named wards, 30 named councillors. CK-style intrigue: factions, ambition, rivalries, rebellions.
+        Click a ward on the map to inspect it.
+      </div>
     </div>
     <div class="row">
       <div class="pill"><div class="k">Phase</div><div class="v" id="phase">Setup</div></div>
@@ -49,6 +72,7 @@
   </header>
 
   <div class="grid">
+    <!-- LEFT: game core -->
     <div class="card">
       <div class="row" style="justify-content:space-between">
         <div class="row">
@@ -59,8 +83,8 @@
         </div>
         <div class="row">
           <span class="tag">Majority = 16</span>
-          <span class="tag">Process matters</span>
-          <span class="tag">No real people</span>
+          <span class="tag">People drive votes</span>
+          <span class="tag">Process is power</span>
         </div>
       </div>
 
@@ -99,20 +123,20 @@
       <div class="hr"></div>
 
       <div class="row" style="gap:10px;">
-        <div class="pill" style="min-width:180px"><div class="k">Trust</div><div class="v" id="trust">—</div></div>
+        <div class="pill" style="min-width:160px"><div class="k">Trust</div><div class="v" id="trust">—</div></div>
         <div class="pill" style="min-width:180px"><div class="k">Officer Relationship</div><div class="v" id="officers">—</div></div>
-        <div class="pill" style="min-width:180px"><div class="k">Legal Risk</div><div class="v" id="legalRisk">—</div></div>
-        <div class="pill" style="min-width:180px"><div class="k">Budget Gap</div><div class="v" id="budgetGap">—</div></div>
+        <div class="pill" style="min-width:160px"><div class="k">Legal Risk</div><div class="v" id="legalRisk">—</div></div>
+        <div class="pill" style="min-width:160px"><div class="k">Budget Gap</div><div class="v" id="budgetGap">—</div></div>
       </div>
 
       <div class="hr"></div>
 
-      <div class="row" style="gap:10px; align-items:flex-start;">
-        <div style="flex:1;min-width:320px">
+      <div class="twoCol">
+        <div>
           <div class="small">Council seat table (after election)</div>
           <div id="seatTable" class="small">Start a new game.</div>
         </div>
-        <div style="flex:1;min-width:320px">
+        <div>
           <div class="small">Formation / Governance choices</div>
           <div id="actions" class="small">—</div>
         </div>
@@ -124,66 +148,128 @@
       <div class="log" id="log"></div>
     </div>
 
+    <!-- RIGHT: map + ward/councillor inspector -->
     <div class="card">
       <div class="row" style="justify-content:space-between;align-items:flex-end">
         <div>
-          <div style="font-weight:900;">Wards (30)</div>
-          <div class="small">Each ward has lean, volatility, salience. Canvassing is abstracted in this prototype.</div>
+          <div style="font-weight:1000;">Council Map (30 wards)</div>
+          <div class="small">Click a ward cell to inspect it. Map is a stylized grid for prototyping.</div>
         </div>
-        <button id="toggleWardsBtn" disabled>Show/Hide</button>
+        <div class="row">
+          <button id="toggleNamesBtn" disabled>Toggle Labels</button>
+        </div>
       </div>
-      <div class="hr"></div>
-      <div id="wardsPanel" style="display:none"></div>
 
       <div class="hr"></div>
-      <div style="font-weight:900;">Process & Committees (simulated)</div>
-      <ul class="small">
-        <li><b>Budget</b> must pass Full Council (rebellions possible).</li>
-        <li><b>Planning</b> is constrained by policy + officer advice; overriding increases legal risk.</li>
-        <li><b>Scrutiny</b> can damage trust if you rush or ignore consultation.</li>
-        <li><b>Officers</b> aren’t under direct command; relationship affects implementation.</li>
-      </ul>
+
+      <div class="mapWrap">
+        <div class="mapLegend small">
+          <span><span class="dot civ"></span>CIV</span>
+          <span><span class="dot lab"></span>LAB</span>
+          <span><span class="dot grn"></span>GRN</span>
+          <span><span class="dot con"></span>CON</span>
+          <span class="tag">Lean shown pre-election; winner shown post-election</span>
+        </div>
+        <div id="map"></div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="wardTitle" id="inspectTitle">Inspector</div>
+      <div class="small" id="inspectBody">Click <span class="kbd">New Game</span>, then click a ward on the map.</div>
+
+      <div class="hr"></div>
+
+      <div style="font-weight:1000;">Councillor Roster</div>
+      <div class="small">After the election, you’ll see all 30 councillors. Use the filter to browse factions and rivals.</div>
+      <div class="row" style="margin-top:6px">
+        <select id="rosterFilter" disabled>
+          <option value="ALL">All Parties</option>
+          <option value="CIV">CIV only</option>
+          <option value="LAB">LAB only</option>
+          <option value="GRN">GRN only</option>
+          <option value="CON">CON only</option>
+        </select>
+        <select id="factionFilter" disabled>
+          <option value="ALL">All Factions</option>
+          <option value="Pragmatist">Pragmatists</option>
+          <option value="Localist">Localists</option>
+          <option value="Ideologue">Ideologues</option>
+        </select>
+      </div>
+      <div style="margin-top:8px" id="roster" class="small">—</div>
     </div>
   </div>
 </div>
 
 <script>
 (() => {
-  // ---- Utilities
+  // --- Helpers
   const el = (id) => document.getElementById(id);
   const rand = (a,b) => Math.random()*(b-a)+a;
   const randi = (a,b) => Math.floor(rand(a,b+1));
   const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
   const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
 
-  // ---- Game constants
+  // --- Parties
   const PARTIES = [
-    { id:"CIV", name:"Civic Union",      color:"good",  base: 0.00 },
-    { id:"LAB", name:"Labour Alliance",  color:"warn",  base: 0.00 },
-    { id:"GRN", name:"Greens & Indies",  color:"good",  base: 0.00 },
-    { id:"CON", name:"Community Cons.", color:"bad",   base: 0.00 },
+    { id:"CIV", name:"Civic Union",       css:"good",  map:"civ" },
+    { id:"LAB", name:"Labour Alliance",   css:"warn",  map:"lab" },
+    { id:"GRN", name:"Greens & Indies",   css:"good",  map:"grn" },
+    { id:"CON", name:"Community Cons.",  css:"bad",   map:"con" },
   ];
+  const partyName = (id) => PARTIES.find(p=>p.id===id)?.name || id;
+  const partyCss  = (id) => PARTIES.find(p=>p.id===id)?.css || "";
+  const partyMap  = (id) => PARTIES.find(p=>p.id===id)?.map || "";
+
+  // --- Names (UK-ish, fictional)
+  const FIRST = ["Aisha","Ben","Clare","Daniel","Elena","Farah","Gareth","Holly","Imran","Jade","Kiran","Lewis","Mina","Noah","Olivia","Priya","Quinn","Ravi","Sam","Tariq","Uma","Violet","Will","Xavier","Yasmin","Zoe","Harriet","Mason","Layla","Finley","Amir","Sofia","Callum","Nadia","Reece","Sana","Elliot","Leah","Hassan","Amelia"];
+  const LAST  = ["Patel","Khan","Smith","Jones","Taylor","Brown","Singh","Ahmed","Williams","Johnson","Murphy","Evans","Hughes","Clarke","Wright","Walker","Morris","Davies","Cooper","Ward","Hall","Harris","Bennett","Fisher","Shah","Ali","Begum","Lewis","Moore","Young","Scott","Adams","Reid","Price","Harrison","Campbell","Barnes","Kelly","Stewart","Cole"];
+  const TITLES = ["Cllr","Cllr","Cllr","Cllr","Cllr"]; // keep simple
+
+  // --- Ward name parts
+  const WARD_PREFIX = ["North","South","East","West","Upper","Lower","Old","New","Riverside","Hill","Park","Lakeside","Meadow","Harbour","Market","Cathedral","Station","Forest","Brook","Canal","Harbourview","Crescent","Oak","Birch","Kings","Queens","St.","Abbey","Manor","Grove","Heath"];
+  const WARD_CORE   = ["Ashford","Brindle","Claymoor","Dunwick","Eversham","Foxglove","Greystone","Harrowgate","Ivydale","Juniper","Kestrel","Langford","Marlowe","Nightingale","Orchard","Pemberton","Quarrybank","Rosebridge","Stonehaven","Thornbury","Uplands","Valemere","Willowfield","Yewton","Briar","Caldwell","Fairview","Rookery","Sableton","Wrenford","Hatherleigh","Crownford","Linton","Wheatley","Belltown"];
+  const WARD_SUFFIX = ["Central","Heights","Green","Quays","Vale","Ward","End","Common","Fields","Cross","Park","Rise","Side","Hollow","Point","Gate","Meadows","Garth","Town","View"];
 
   const ISSUE_POOL = [
-    "Bins & street cleaning", "Potholes & transport", "High street vitality",
-    "Planning & housing", "Anti-social behaviour", "Flooding & resilience",
-    "Youth services", "Care services", "Council tax", "Green spaces"
+    "Bins & street cleaning","Potholes & transport","High street vitality",
+    "Planning & housing","Anti-social behaviour","Flooding & resilience",
+    "Youth services","Care services","Council tax","Green spaces"
+  ];
+
+  const FACTIONS = [
+    { name:"Pragmatist", desc:"Delivery-first, hates chaos." },
+    { name:"Localist",   desc:"Ward interests first, suspicious of leadership." },
+    { name:"Ideologue",  desc:"Values-first, will rebel on principle." },
+  ];
+
+  const TRAITS = [
+    { name:"Ward Champion", effect:"Harder to whip if ward pressure is high." },
+    { name:"Media Magnet", effect:"Boosts visibility; increases gaffe risk (later)." },
+    { name:"Procedural Nerd", effect:"Cares about standing orders; rebels if process ignored." },
+    { name:"Deal Maker", effect:"More likely to support coalition bargains." },
+    { name:"Budget Hawk", effect:"Rebels if numbers look dodgy." },
+    { name:"Party Soldier", effect:"High baseline loyalty." },
   ];
 
   const EVENT_POOL = [
     { t:"Local paper runs a splash on service delays.", trust:-3, officers:-1 },
     { t:"Storm damage hits two wards; emergency spending needed.", budgetGap:+6, trust:-2 },
-    { t:"A popular community group endorses your ‘listening tour’.", trust:+4, officers:+1 },
-    { t:"Freedom of Information row escalates; scrutiny demands documents.", trust:-4, legal:+2 },
+    { t:"A community group praises your listening tour.", trust:+4, officers:+1 },
+    { t:"FOI row escalates; scrutiny demands documents.", trust:-4, legal:+2 },
     { t:"Contractor underperforms; officers recommend renegotiation.", officers:+2, trust:+1 },
-    { t:"Viral clip from Full Council goes the wrong way.", trust:-5 },
-    { t:"Residents praise quick pothole response in a key ward.", trust:+3 },
+    { t:"A viral Full Council clip goes the wrong way.", trust:-5 },
+    { t:"Residents praise quick pothole response in a target ward.", trust:+3 },
     { t:"Monitoring Officer warns: a proposed motion is borderline unlawful.", legal:+3, trust:-1 },
   ];
 
-  // ---- State
+  // --- State
   let S = null;
+  let showLabels = true;
+  let selectedWardId = null;
 
+  // --- Logging
   function log(msg){
     const box = el("log");
     box.textContent += msg + "\n";
@@ -191,52 +277,321 @@
   }
   function setPhase(p){ el("phase").textContent = p; }
   function setMonth(m){ el("month").textContent = m; }
-  function fmtSigned(n){ return (n>=0?"+":"") + n; }
 
-  // ---- World generation
-  function genWards() {
-    // 30 wards with: lean party, lean strength, volatility, issue salience
+  // --- Generation
+  function uniqueName(set, gen){
+    let x = gen();
+    let tries = 0;
+    while(set.has(x) && tries<500){ x = gen(); tries++; }
+    set.add(x);
+    return x;
+  }
+
+  function genWardNames(){
+    const used = new Set();
     const wards = [];
-    const leans = ["CIV","LAB","GRN","CON"];
-    // skew: mix of safe, lean, marginal
     for(let i=1;i<=30;i++){
+      const name = uniqueName(used, () => {
+        const parts = [];
+        if(Math.random()<0.55) parts.push(pick(WARD_PREFIX));
+        parts.push(pick(WARD_CORE));
+        if(Math.random()<0.55) parts.push(pick(WARD_SUFFIX));
+        return parts.join(" ");
+      });
+      wards.push({ id:i, name });
+    }
+    return wards;
+  }
+
+  function genWards(){
+    const named = genWardNames();
+    const leans = ["CIV","LAB","GRN","CON"];
+    const wards = [];
+    for(let i=0;i<30;i++){
       const lean = pick(leans);
-      const strength = pick([8,10,12,14,16,18]);         // baseline lead in points
-      const volatility = pick([3,4,5,6,7,8]);            // swing range
-      const turnout = pick([28,32,36,40,44,48,52,56]);   // baseline turnout
-      const issue = pick(ISSUE_POOL);
+      const strength   = pick([8,10,12,14,16,18]);
+      const volatility = pick([3,4,5,6,7,8]);
+      const turnout    = pick([28,32,36,40,44,48,52,56]);
       wards.push({
-        id:i,
-        name:`Ward ${i.toString().padStart(2,"0")}`,
-        lean,
-        strength,
-        volatility,
-        turnout,
-        issue,
+        id: named[i].id,
+        name: named[i].name,
+        lean, strength, volatility, turnout,
+        issue: pick(ISSUE_POOL),
+        winner: null, // set after election
       });
     }
     return wards;
   }
 
-  function genCouncillors(seats){
-    // 1 councillor per ward; faction/loyalty affects rebellions in governance
+  function genPersonName(used){
+    const first = pick(FIRST);
+    const last = pick(LAST);
+    const full = `${first} ${last}`;
+    if(used.has(full)) return genPersonName(used);
+    used.add(full);
+    return full;
+  }
+
+  function genCouncillorsFromResults(){
+    // Create councillor per ward (winner). Add faction/traits and cross-links (rivals).
+    const used = new Set();
     const councillors = [];
-    let id = 1;
-    for(const p of Object.keys(seats)){
-      for(let i=0;i<seats[p];i++){
-        councillors.push({
-          cid:id++,
-          party:p,
-          loyalty: clamp(Math.round(rand(45,85)), 35, 95),   // higher = less likely to rebel
-          ambition: clamp(Math.round(rand(20,80)), 10, 95),  // higher = wants roles
-          wardPressure: clamp(Math.round(rand(20,80)), 10, 95), // higher = must please ward
-        });
+    for(const w of S.wards){
+      const party = w.winner;
+      const name = genPersonName(used);
+      const faction = pick(FACTIONS).name;
+
+      // baseline stats
+      let loyalty = clamp(Math.round(rand(45,85)), 35, 95);
+      let ambition = clamp(Math.round(rand(20,80)), 10, 95);
+      let wardPressure = clamp(Math.round(rand(20,85)), 10, 95);
+
+      // trait(s)
+      const trait1 = pick(TRAITS).name;
+      const trait2 = (Math.random()<0.35) ? pick(TRAITS).name : null;
+
+      // trait effects (light)
+      if(trait1==="Party Soldier" || trait2==="Party Soldier") loyalty = clamp(loyalty + 12, 35, 99);
+      if(trait1==="Ward Champion" || trait2==="Ward Champion") wardPressure = clamp(wardPressure + 10, 10, 99);
+      if(trait1==="Deal Maker" || trait2==="Deal Maker") ambition = clamp(ambition + 8, 10, 99);
+
+      councillors.push({
+        cid: councillors.length+1,
+        title: pick(TITLES),
+        name,
+        party,
+        wardId: w.id,
+        wardName: w.name,
+        faction,
+        loyalty, ambition, wardPressure,
+        traits: [trait1, ...(trait2 && trait2!==trait1 ? [trait2] : [])],
+        rivalCid: null, // filled later
+        notes: [],
+      });
+    }
+
+    // assign intra-party rivals (CK flavour)
+    const byParty = groupBy(councillors, c=>c.party);
+    for(const [party, list] of Object.entries(byParty)){
+      if(list.length < 3) continue;
+      // pick a few rivalry pairs
+      const pairs = Math.min(3, Math.floor(list.length/3));
+      for(let i=0;i<pairs;i++){
+        const a = pick(list), b = pick(list);
+        if(a.cid===b.cid) continue;
+        a.rivalCid = b.cid;
+        b.rivalCid = a.cid;
       }
     }
+
     return councillors;
   }
 
-  // ---- Election sim
+  function groupBy(arr, keyFn){
+    const m = {};
+    for(const x of arr){
+      const k = keyFn(x);
+      (m[k] ||= []).push(x);
+    }
+    return m;
+  }
+
+  // --- Map (SVG grid)
+  function renderMap(){
+    // 6 columns x 5 rows = 30 wards
+    const cols = 6, rows = 5;
+    const cellW = 150, cellH = 72;
+    const pad = 10;
+    const svgW = cols*cellW + pad*2;
+    const svgH = rows*cellH + pad*2;
+
+    const wards = S?.wards || [];
+    const wardById = new Map(wards.map(w=>[w.id, w]));
+
+    const cells = [];
+    for(let i=0;i<30;i++){
+      const ward = wards[i];
+      const id = ward?.id ?? (i+1);
+      const c = i % cols;
+      const r = Math.floor(i/cols);
+      const x = pad + c*cellW;
+      const y = pad + r*cellH;
+
+      const baseParty = ward?.lean;
+      const shownParty = ward?.winner || baseParty;
+      const fill = partyFill(shownParty, ward?.winner ? 0.42 : 0.22); // winner stronger
+
+      const label = ward?.name ?? `Ward ${id}`;
+      const short = label.length > 18 ? label.slice(0,18)+"…" : label;
+
+      const selectedClass = (selectedWardId===id) ? "selected" : "";
+
+      cells.push(`
+        <g class="wardCell ${selectedClass}" data-ward="${id}">
+          <rect x="${x}" y="${y}" width="${cellW-2}" height="${cellH-2}" rx="10" fill="${fill}"></rect>
+          <text x="${x+10}" y="${y+22}">${showLabels ? escapeXml(short) : ""}</text>
+          <text x="${x+10}" y="${y+44}" style="font-size:10px;fill:rgba(170,178,255,0.85);font-weight:800;">
+            ${showLabels ? (ward?.winner ? `Winner: ${ward.winner}` : `Lean: ${ward?.lean}`) : ""}
+          </text>
+        </g>
+      `);
+    }
+
+    el("map").innerHTML = `
+      <svg viewBox="0 0 ${svgW} ${svgH}" role="img" aria-label="Council ward map">
+        ${cells.join("")}
+      </svg>
+    `;
+
+    // click handlers
+    const svg = el("map").querySelector("svg");
+    svg.querySelectorAll(".wardCell").forEach(g=>{
+      g.addEventListener("click", () => {
+        const id = +g.getAttribute("data-ward");
+        selectedWardId = id;
+        renderMap(); // re-render for selection highlight
+        showWardInspector(id);
+      });
+    });
+
+    if(selectedWardId && wardById.has(selectedWardId)){
+      showWardInspector(selectedWardId);
+    }
+  }
+
+  function partyFill(partyId, alpha){
+    const a = alpha;
+    switch(partyId){
+      case "CIV": return `rgba(102,255,204,${a})`;
+      case "LAB": return `rgba(255,211,106,${a})`;
+      case "GRN": return `rgba(102,200,255,${a})`;
+      case "CON": return `rgba(255,90,122,${a})`;
+      default: return `rgba(255,255,255,${a})`;
+    }
+  }
+
+  function escapeXml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // --- Inspector panels
+  function showWardInspector(wardId){
+    const w = S.wards.find(x=>x.id===wardId);
+    if(!w){
+      el("inspectTitle").textContent = "Inspector";
+      el("inspectBody").textContent = "Ward not found.";
+      return;
+    }
+    const councillor = S.councillors?.find(c=>c.wardId===w.id);
+    const cHtml = councillor ? councillorCard(councillor) : `<div class="small">No councillor yet (run the election).</div>`;
+
+    el("inspectTitle").innerHTML = `${escapeXml(w.name)} <span class="tag">Ward ${w.id}</span>`;
+    el("inspectBody").innerHTML = `
+      <div class="small">
+        <b>Issue:</b> ${escapeXml(w.issue)}<br/>
+        <b>Baseline lean:</b> <b>${w.lean}</b> (strength ${w.strength}) • <b>Volatility:</b> ${w.volatility} • <b>Turnout:</b> ${w.turnout}%<br/>
+        <b>Election:</b> ${w.winner ? `<span class="${partyCss(w.winner)}"><b>${w.winner}</b></span> won` : `Not run yet`}
+      </div>
+      <div class="hr"></div>
+      <div style="font-weight:1000;">Councillor</div>
+      ${cHtml}
+    `;
+  }
+
+  function councillorCard(c){
+    const rival = c.rivalCid ? S.councillors.find(x=>x.cid===c.rivalCid) : null;
+    return `
+      <div class="small">
+        <b>${escapeXml(c.title)} ${escapeXml(c.name)}</b> —
+        <span class="${partyCss(c.party)}"><b>${partyName(c.party)}</b> (${c.party})</span><br/>
+        <b>Faction:</b> ${escapeXml(c.faction)} •
+        <b>Loyalty:</b> ${c.loyalty} • <b>Ambition:</b> ${c.ambition} • <b>Ward Pressure:</b> ${c.wardPressure}<br/>
+        <b>Traits:</b> ${c.traits.map(t=>`<span class="tag">${escapeXml(t)}</span>`).join(" ")}<br/>
+        ${rival ? `<b>Rival:</b> ${escapeXml(rival.name)} (${rival.party})` : `<b>Rival:</b> none`}
+      </div>
+    `;
+  }
+
+  function renderRoster(){
+    if(!S?.councillors?.length){
+      el("roster").innerHTML = "—";
+      return;
+    }
+    const pFilter = el("rosterFilter").value;
+    const fFilter = el("factionFilter").value;
+    let list = [...S.councillors];
+    if(pFilter !== "ALL") list = list.filter(c=>c.party===pFilter);
+    if(fFilter !== "ALL") list = list.filter(c=>c.faction===fFilter);
+
+    list.sort((a,b)=>{
+      // Sort by party then ambition desc
+      if(a.party!==b.party) return a.party.localeCompare(b.party);
+      return b.ambition - a.ambition;
+    });
+
+    el("roster").innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Councillor</th><th>Ward</th><th>Faction</th><th>Loy</th><th>Amb</th><th>Ward</th><th>Rival</th></tr>
+        </thead>
+        <tbody>
+          ${list.map(c=>{
+            const rival = c.rivalCid ? S.councillors.find(x=>x.cid===c.rivalCid) : null;
+            return `
+              <tr>
+                <td><b>${escapeXml(c.name)}</b><div class="small">${partyName(c.party)} (${c.party})</div></td>
+                <td>${escapeXml(c.wardName)}</td>
+                <td>${escapeXml(c.faction)}</td>
+                <td>${c.loyalty}</td>
+                <td>${c.ambition}</td>
+                <td>${c.wardPressure}</td>
+                <td class="small">${rival ? escapeXml(rival.name) : "—"}</td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // --- UI stats
+  function updateTopStats(){
+    el("trust").textContent = (S?.trust ?? "—");
+    el("officers").textContent = (S?.officers ?? "—");
+    el("legalRisk").textContent = (S?.legalRisk ?? "—");
+    el("budgetGap").textContent = (S?.budgetGap ?? "—");
+    updateControlLabel();
+  }
+
+  function updateControlLabel(){
+    if(!S || !S.seats){ el("control").textContent="—"; return; }
+    const player = el("playerParty").value;
+    const bloc = S.controlBlocSeats ?? S.seats[player];
+    const maj = bloc >= 16;
+    el("control").textContent = maj ? `Bloc ${bloc} (Majority)` : `Bloc ${bloc} (No majority)`;
+  }
+
+  function renderSeatTable(){
+    const seats = S.seats;
+    const rows = Object.keys(seats).map(pid=>{
+      return `<tr><td><b class="${partyCss(pid)}">${partyName(pid)}</b> <span class="small">(${pid})</span></td><td>${seats[pid]}</td></tr>`;
+    }).join("");
+    el("seatTable").innerHTML = `
+      <table>
+        <thead><tr><th>Party</th><th>Seats</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="small">Next: Formation. Majority is 16 seats.</div>
+    `;
+    updateControlLabel();
+  }
+
+  // --- Election sim
   function runElection(){
     const player = el("playerParty").value;
     const diff = +el("difficulty").value;     // 0..2
@@ -244,62 +599,59 @@
 
     log("=== ELECTION NIGHT ===");
     log(`You are managing: ${partyName(player)} (${player}).`);
-    log(`Difficulty: ${["Casual","Standard","Hardcore"][diff]} | National mood swing: ${mood>0?("+"+mood):mood} (towards you).`);
+    log(`Difficulty: ${["Casual","Standard","Hardcore"][diff]} | National mood: ${mood>0?("+"+mood):mood} (towards you).`);
 
     const seats = { CIV:0, LAB:0, GRN:0, CON:0 };
-    const results = [];
 
     for(const w of S.wards){
-      // baseline points: lean party starts ahead by strength
       const base = { CIV:0, LAB:0, GRN:0, CON:0 };
       base[w.lean] += w.strength;
 
-      // campaign effects (abstract):
-      // player gets a small efficiency bonus; AI gets more on higher difficulty.
       const playerBoost = (diff===0? 3 : diff===1? 2 : 1.2);
       base[player] += playerBoost * (0.7 + Math.random()*0.6);
-
-      // mood swing affects player relative to others
       base[player] += mood * 1.2;
 
-      // randomness / volatility
+      // ward volatility
       for(const pid of Object.keys(base)){
         base[pid] += rand(-w.volatility, w.volatility);
       }
 
-      // normalize into a winner
       const sorted = Object.entries(base).sort((a,b)=>b[1]-a[1]);
       const winner = sorted[0][0];
+      w.winner = winner;
       seats[winner] += 1;
-
-      results.push({
-        ward:w.name, issue:w.issue, lean:w.lean,
-        winner, margin: Math.round(sorted[0][1]-sorted[1][1])
-      });
     }
 
     S.seats = seats;
-    S.councillors = genCouncillors(seats);
-
-    const total = Object.values(seats).reduce((a,b)=>a+b,0);
-    log(`Seats allocated: ${total} total (expected 30).`);
-
     renderSeatTable();
-    updateTopStats();
+
+    // Generate councillors AFTER winners exist
+    S.councillors = genCouncillorsFromResults();
+
+    log("Councillors elected. Personalities and rivalries are now in play.");
+    log("Tip: click wards on the map to see councillor cards.\n");
 
     // unlock formation
     el("formationBtn").disabled = false;
     el("runElectionBtn").disabled = true;
+
+    // enable roster filters
+    el("rosterFilter").disabled = false;
+    el("factionFilter").disabled = false;
+
     setPhase("Election Done");
+
+    renderMap();
+    if(selectedWardId) showWardInspector(selectedWardId);
+    renderRoster();
+    updateTopStats();
   }
 
-  // ---- Formation
+  // --- Formation
   function startFormation(){
     setPhase("Formation");
-    log("\n=== COUNCIL FORMATION ===");
-    log("You will attempt to form an administration (majority or agreements).");
-    log("In this prototype: pick partners, pick cabinet roles, then move to governance.\n");
-
+    log("=== COUNCIL FORMATION ===");
+    log("Now you form an administration. Personalities affect stability.\n");
     renderFormationUI();
     el("formationBtn").disabled = true;
   }
@@ -307,26 +659,26 @@
   function renderFormationUI(){
     const player = el("playerParty").value;
     const seats = S.seats;
-
     const parties = Object.keys(seats).filter(p=>seats[p]>0);
+
     const options = parties.filter(p=>p!==player).map(p=>{
       return `<label class="row small"><input type="checkbox" data-coal="${p}"/> ${partyName(p)} (${p}) — ${seats[p]} seats</label>`;
     }).join("");
 
     el("actions").innerHTML = `
-      <div class="small">Choose coalition partners (checkboxes), then choose agreement type.</div>
+      <div class="small"><b>Pick partners</b> then choose agreement type.</div>
       <div class="hr"></div>
       <div>${options || "<div class='small'>No other parties won seats (rare).</div>"}</div>
       <div class="hr"></div>
       <div class="row">
         <select id="agreeType">
           <option value="coalition">Coalition (share cabinet)</option>
-          <option value="supply">Confidence & Supply (support votes, fewer posts)</option>
+          <option value="supply">Confidence & Supply</option>
           <option value="minority">Minority (no deal)</option>
         </select>
         <button id="confirmFormationBtn">Confirm Formation</button>
       </div>
-      <div class="small">Tip: Coalitions are stable but cost concessions. Minority is flexible but rebellion risk rises.</div>
+      <div class="small">Next version will let you trade cabinet posts to specific councillors.</div>
     `;
 
     el("confirmFormationBtn").onclick = () => confirmFormation();
@@ -347,90 +699,86 @@
     S.formation = { player, partners, type };
     S.controlBlocSeats = bloc;
 
-    // concessions and stability
     let trustDelta = 0, officersDelta = 0;
-    if(type==="coalition"){
-      trustDelta += 2;
-      officersDelta += 1;
-      log(`You form a COALITION with: ${partners.length? partners.map(p=>partyName(p)+" ("+p+")").join(", ") : "nobody"}.`);
-      log("Coalition increases stability but requires shared cabinet roles and policy compromises.");
-    } else if(type==="supply"){
-      trustDelta += 1;
-      log(`You secure CONFIDENCE & SUPPLY from: ${partners.length? partners.map(p=>partyName(p)+" ("+p+")").join(", ") : "nobody"}.`);
-      log("Supply deal is moderately stable, fewer cabinet posts, but policy concessions still apply.");
-    } else {
-      trustDelta -= 2;
-      officersDelta -= 1;
-      log("You attempt a MINORITY administration. Expect tougher scrutiny and higher rebellion risk.");
-    }
+    if(type==="coalition"){ trustDelta += 2; officersDelta += 1; }
+    if(type==="supply"){ trustDelta += 1; }
+    if(type==="minority"){ trustDelta -= 2; officersDelta -= 1; }
 
-    // cabinet distribution affects ambition/loyalty
-    // simple: if coalition, allocate some “posts” to partners; if not, keep posts but increase internal rivalry.
-    const posts = ["Finance","Housing","Environment","Highways","Community Safety"];
-    const totalPosts = posts.length;
-    const partnerPostCount =
-      (type==="coalition") ? Math.min(totalPosts-2, Math.ceil(partners.length * 1.2)) :
-      (type==="supply") ? Math.min(2, partners.length) :
-      0;
-
-    // compute discipline baseline
+    // Discipline baseline now influenced by councillor personalities:
+    // - high ambition + rivalries reduce discipline
+    // - Party Soldiers increase it
     let discipline = 70;
     if(type==="coalition") discipline += 8;
     if(type==="supply") discipline += 3;
     if(type==="minority") discipline -= 10;
-    discipline = clamp(discipline, 40, 85);
 
-    S.discipline = discipline;
+    const yourCllrs = S.councillors.filter(c=>c.party===player);
+    const avgAmb = avg(yourCllrs.map(c=>c.ambition));
+    const partySoldiers = yourCllrs.filter(c=>c.traits.includes("Party Soldier")).length;
+    const rivalPairs = yourCllrs.filter(c=>c.rivalCid).length;
 
-    // Apply global stats changes
+    discipline -= clamp((avgAmb-55)*0.25, -6, 10);
+    discipline += partySoldiers * 1.2;
+    discipline -= rivalPairs * 0.8;
+
+    S.discipline = clamp(Math.round(discipline), 40, 88);
+
     S.trust = clamp(S.trust + trustDelta, 0, 100);
     S.officers = clamp(S.officers + officersDelta, 0, 100);
 
-    // Control status
     const majority = (bloc >= 16);
     S.controlsCouncil = majority;
 
-    log(`Seats in your bloc (for key votes): ${bloc}. Majority? ${majority ? "YES" : "NO"}.`);
+    log(`Formation: ${type.toUpperCase()} with ${partners.length? partners.join(", "):"nobody"}. Bloc seats: ${bloc}. Majority? ${majority?"YES":"NO"}.`);
+    log(`Whip discipline estimate: ${S.discipline} (ambition, rivals, and party soldiers affect this).`);
+    log("=== GOVERNANCE BEGINS ===\n");
 
-    // proceed to governance
-    log("\n=== GOVERNANCE BEGINS ===");
-    log("Monthly turns: events → agenda → committee constraints → full council votes.\n");
     S.phase = "Governance";
     S.month = 1;
+    S.usedAgenda = false;
+    S.didBudget = false;
+    S.didPlanning = false;
+    S.didScrutiny = false;
+
     setPhase("Governance");
     setMonth("1");
     el("nextMonthBtn").disabled = false;
 
-    // wipe actions into governance UI
     renderGovernanceUI();
     updateTopStats();
   }
 
-  // ---- Governance actions
+  function avg(xs){
+    if(!xs.length) return 0;
+    return xs.reduce((a,b)=>a+b,0)/xs.length;
+  }
+
+  // --- Governance UI
   function renderGovernanceUI(){
     el("actions").innerHTML = `
-      <div class="small"><b>Choose an agenda approach this month</b> (process affects trust + legal risk).</div>
+      <div class="small"><b>Set agenda</b> (once per month)</div>
       <div class="hr"></div>
       <div class="row">
-        <button id="agendaListen">Consult & Stage (slower, safer)</button>
-        <button id="agendaPush">Push Through (faster, risky)</button>
-        <button id="agendaSymbol">Symbolic Motions (cheap, mixed)</button>
+        <button id="agendaListen">Consult & Stage (safer)</button>
+        <button id="agendaPush">Push Through (risky)</button>
+        <button id="agendaSymbol">Symbolic Motions (cheap)</button>
       </div>
       <div class="hr"></div>
-      <div class="small"><b>Major decisions (simulate committee + full council)</b></div>
+      <div class="small"><b>Decisions</b> (simulate committee + full council)</div>
       <div class="row">
         <button id="doBudget">Run Budget Vote</button>
         <button id="doPlanning">Run Planning Committee</button>
-        <button id="doScrutiny">Face Scrutiny Session</button>
+        <button id="doScrutiny">Face Scrutiny</button>
       </div>
       <div class="hr"></div>
-      <div class="small">Goal (prototype): finish 12 months with trust ≥ 35 and legal risk ≤ 65, and avoid budget failure.</div>
+      <div class="small">
+        Prototype goal: survive 12 months with <b>Trust ≥ 35</b> and <b>Legal Risk ≤ 65</b>.
+        Watch named rebels in the log.
+      </div>
     `;
-
     el("agendaListen").onclick = () => chooseAgenda("listen");
     el("agendaPush").onclick = () => chooseAgenda("push");
     el("agendaSymbol").onclick = () => chooseAgenda("symbol");
-
     el("doBudget").onclick = () => runBudgetVote();
     el("doPlanning").onclick = () => runPlanning();
     el("doScrutiny").onclick = () => runScrutiny();
@@ -442,19 +790,19 @@
     S.usedAgenda = true;
 
     if(mode==="listen"){
-      log("Agenda: CONSULT & STAGE. You run consultations and phase delivery.");
+      log("Agenda: CONSULT & STAGE. Process legitimacy rises.");
       S.trust = clamp(S.trust + 3, 0, 100);
       S.officers = clamp(S.officers + 2, 0, 100);
       S.legalRisk = clamp(S.legalRisk - 2, 0, 100);
       S.budgetGap = clamp(S.budgetGap - 1, -20, 40);
     } else if(mode==="push"){
-      log("Agenda: PUSH THROUGH. You compress timelines and force decisions.");
+      log("Agenda: PUSH THROUGH. Timelines compress; backlash risk rises.");
       S.trust = clamp(S.trust - 4, 0, 100);
       S.officers = clamp(S.officers - 2, 0, 100);
       S.legalRisk = clamp(S.legalRisk + 4, 0, 100);
       S.budgetGap = clamp(S.budgetGap - 2, -20, 40);
     } else {
-      log("Agenda: SYMBOLIC MOTIONS. You prioritise visible gestures over delivery.");
+      log("Agenda: SYMBOLIC MOTIONS. Visibility up; delivery down.");
       S.trust = clamp(S.trust + 1, 0, 100);
       S.officers = clamp(S.officers - 1, 0, 100);
       S.budgetGap = clamp(S.budgetGap + 1, -20, 40);
@@ -462,84 +810,68 @@
     updateTopStats();
   }
 
+  // --- Decision mechanics (still using prompt for now; next step would be modals)
   function runBudgetVote(){
     if(S.phase!=="Governance") return;
-    if(S.didBudget) { log("Budget has already been handled this month."); return; }
+    if(S.didBudget) { log("Budget already handled this month."); return; }
     S.didBudget = true;
 
     log("\n[Budget] Officers present a draft. Legal requirement: balanced budget.");
-    // Mechanics: budget gap must be reduced; choices affect trust & rebellions.
     const gap = S.budgetGap;
 
-    // Player choice prompt (simple)
     const choice = prompt(
-      `Budget gap is ${gap} (higher = worse).\nChoose approach:\n1) Raise Council Tax (trust risk)\n2) Cut Discretionary Services (trust risk)\n3) Use Reserves / Asset Sale (officer/legal risk)\nEnter 1,2,or3:`,
+      `Budget gap is ${gap}.\n1) Raise Council Tax\n2) Cut Discretionary Services\n3) Use Reserves / Asset Sale\nEnter 1/2/3:`,
       "1"
     );
 
-    let gapChange = 0, trustDelta = 0, legalDelta = 0, officersDelta = 0;
+    let gapChange=0, trustDelta=0, legalDelta=0, officersDelta=0;
+    if(choice==="1"){ log("You propose a Council Tax rise."); gapChange=-6; trustDelta=-2; officersDelta=+2; }
+    else if(choice==="2"){ log("You propose discretionary cuts."); gapChange=-6; trustDelta=-4; officersDelta=+1; }
+    else { log("You propose reserves / asset disposal. Officers warn about sustainability."); gapChange=-7; trustDelta=-1; officersDelta=-2; legalDelta=+3; }
 
-    if(choice==="1"){
-      log("You propose a Council Tax rise (within limits).");
-      gapChange = -6; trustDelta = -2; officersDelta = +2;
-    } else if(choice==="2"){
-      log("You propose discretionary cuts (libraries, youth, culture).");
-      gapChange = -6; trustDelta = -4; officersDelta = +1;
-    } else {
-      log("You propose using reserves / asset disposal. Officers warn about sustainability.");
-      gapChange = -7; trustDelta = -1; officersDelta = -2; legalDelta = +3;
-    }
+    const pass = councilVoteResolution("budget", { trustDelta, legalDelta });
 
-    // Rebellion risk (whip + ward pressure + deal type + trust)
-    const pass = councilVoteProbability({ type:"budget" }, trustDelta, legalDelta);
     S.budgetGap = clamp(S.budgetGap + gapChange, -20, 40);
     S.trust = clamp(S.trust + trustDelta, 0, 100);
     S.officers = clamp(S.officers + officersDelta, 0, 100);
     S.legalRisk = clamp(S.legalRisk + legalDelta, 0, 100);
 
     if(S.budgetGap > 2){
-      log(`Budget is still not balanced enough (gap now ${S.budgetGap}). You’ll face extra pressure next month.`);
+      log(`Budget still shaky (gap now ${S.budgetGap}). Extra pressure next month.`);
       S.trust = clamp(S.trust - 2, 0, 100);
       S.legalRisk = clamp(S.legalRisk + 2, 0, 100);
     }
 
     if(pass){
-      log(`Full Council vote: PASSED ✅ (with some grumbling).`);
-      // small recovery if passed
+      log("Full Council vote: PASSED ✅");
       S.officers = clamp(S.officers + 1, 0, 100);
     } else {
-      log(`Full Council vote: FAILED ❌ Budget crisis triggered.`);
-      // Failure state: in a real game you'd have multiple recovery paths; prototype ends.
-      endGame("Budget failure. Administration collapses; external intervention risk.");
+      log("Full Council vote: FAILED ❌ Budget crisis.");
+      endGame("Budget failure. Administration collapses.");
       return;
     }
-
     updateTopStats();
   }
 
   function runPlanning(){
     if(S.phase!=="Governance") return;
-    if(S.didPlanning) { log("Planning has already been handled this month."); return; }
+    if(S.didPlanning) { log("Planning already handled this month."); return; }
     S.didPlanning = true;
 
-    log("\n[Planning] A major application comes to committee. Officers issue a recommendation.");
-    const officerRecommendsApprove = Math.random() < 0.62;
-    log(`Officer recommendation: ${officerRecommendsApprove ? "APPROVE" : "REFUSE"} (policy + evidence basis).`);
+    log("\n[Planning] A major application comes to committee. Officers give a recommendation.");
+    const officerApprove = Math.random() < 0.62;
+    log(`Officer recommendation: ${officerApprove ? "APPROVE" : "REFUSE"}.`);
 
-    const choice = prompt(
-      `Planning choice:\n1) Follow officer recommendation (low risk)\n2) Override (high drama, legal risk)\nEnter 1 or 2:`,
-      "1"
-    );
+    const choice = prompt("Planning:\n1) Follow officer recommendation\n2) Override (higher legal risk)\nEnter 1/2:", "1");
 
     if(choice==="1"){
-      log("You follow officer advice. Process legitimacy increases.");
+      log("You follow officer advice.");
       S.trust = clamp(S.trust + 1, 0, 100);
       S.officers = clamp(S.officers + 2, 0, 100);
       S.legalRisk = clamp(S.legalRisk - 1, 0, 100);
-      // ward reaction random
-      if(Math.random()<0.4){ log("Local residents complain anyway (planning is never easy)."); S.trust = clamp(S.trust-1,0,100); }
+      if(Math.random()<0.4){ log("Residents complain anyway (planning is never easy)."); S.trust = clamp(S.trust-1,0,100); }
     } else {
-      log("You override officer advice to satisfy a political demand. Monitoring Officer warns about appeal/JR risk.");
+      log("You override officer advice. Monitoring Officer warns about appeal/JR risk.");
       S.trust = clamp(S.trust - 2, 0, 100);
       S.officers = clamp(S.officers - 3, 0, 100);
       S.legalRisk = clamp(S.legalRisk + 6, 0, 100);
@@ -551,113 +883,165 @@
         S.trust = clamp(S.trust - 4, 0, 100);
         S.legalRisk = clamp(S.legalRisk + 4, 0, 100);
       } else {
-        log("It holds (for now). Opponents promise to revisit next cycle.");
+        log("It holds (for now). Opposition vows to revisit.");
         S.trust = clamp(S.trust - 1, 0, 100);
       }
     }
-
     updateTopStats();
   }
 
   function runScrutiny(){
     if(S.phase!=="Governance") return;
-    if(S.didScrutiny) { log("Scrutiny has already occurred this month."); return; }
+    if(S.didScrutiny) { log("Scrutiny already handled this month."); return; }
     S.didScrutiny = true;
 
-    log("\n[Scrutiny] Committee summons you on delivery, timelines, and consultation.");
-    const choice = prompt(
-      `Scrutiny approach:\n1) Open, detailed answers (time cost)\n2) Message discipline / deflect (backlash risk)\nEnter 1 or 2:`,
-      "1"
-    );
+    log("\n[Scrutiny] Committee grills you on delivery, consultation, timelines.");
+    const choice = prompt("Scrutiny:\n1) Open, detailed answers\n2) Message discipline / deflect\nEnter 1/2:", "1");
 
     if(choice==="1"){
-      log("You provide detail and release documents. It’s boring but credible.");
+      log("You release documents and answer in detail.");
       S.trust = clamp(S.trust + 2, 0, 100);
       S.officers = clamp(S.officers + 1, 0, 100);
       S.legalRisk = clamp(S.legalRisk - 1, 0, 100);
-      S.budgetGap = clamp(S.budgetGap + 1, -20, 40); // time cost
+      S.budgetGap = clamp(S.budgetGap + 1, -20, 40);
     } else {
       log("You stick to lines. A clip circulates; opposition frames it as evasive.");
       S.trust = clamp(S.trust - 4, 0, 100);
       S.officers = clamp(S.officers - 1, 0, 100);
       if(Math.random()<0.35){
-        log("Scrutiny escalates to a formal report. Reputational hit increases legal exposure.");
+        log("Scrutiny escalates to a formal report. Legal exposure rises.");
         S.legalRisk = clamp(S.legalRisk + 3, 0, 100);
       }
     }
     updateTopStats();
   }
 
-  // ---- Vote probability model
-  function councilVoteProbability(context, trustDelta=0, legalDelta=0){
+  // --- Vote resolution with NAMED rebels and reasons
+  function councilVoteResolution(contextType, deltas){
     const player = S.formation.player;
-    const blocSeats = S.controlBlocSeats || S.seats[player];
+    const blocSeats = S.controlBlocSeats ?? S.seats[player];
     const majorityNeeded = 16;
 
-    // Base probability: if majority bloc, high; if not, low
     let p = (blocSeats >= majorityNeeded) ? 0.82 : 0.35;
 
-    // Discipline & coalition type
-    p += (S.discipline - 70) * 0.006; // discipline 40..85 influences
+    // discipline & deal type
+    p += (S.discipline - 70) * 0.006;
     if(S.formation.type==="minority") p -= 0.10;
     if(S.formation.type==="coalition") p += 0.05;
 
-    // Trust and officer relationship matter (public pressure & internal confidence)
+    // trust/officers
     p += (S.trust - 55) * 0.004;
     p += (S.officers - 55) * 0.003;
 
-    // Legal risk makes councillors wary (and partners skittish)
+    // legal risk
     p -= (S.legalRisk - 25) * 0.005;
-    p -= Math.max(0, legalDelta) * 0.01;
-    p += Math.max(0, trustDelta) * 0.01;
+    p -= Math.max(0, deltas.legalDelta||0) * 0.01;
+    p += Math.max(0, deltas.trustDelta||0) * 0.01;
 
-    // Difficulty adds uncertainty (harder = more shocks)
     const diff = +el("difficulty").value;
     p += (diff===0? +0.03 : diff===2? -0.03 : 0);
 
-    // clamp
-    p = clamp(p, 0.05, 0.95);
+    p = clamp(p, 0.06, 0.94);
 
-    // roll with chance of rebellion
-    const roll = Math.random();
-    const passed = roll < p;
+    // Determine rebels among player's councillors (plus partners if coalition/supply in a future step)
+    const yourCllrs = S.councillors.filter(c=>c.party===player);
+    const expectedRebels = clamp(Math.round((1-p) * (2 + yourCllrs.length/3)), 0, Math.min(6, yourCllrs.length));
 
-    // add flavour: rebellion count estimate
-    const expectedRebels = Math.round((1-p) * 6);
-    if(expectedRebels>0){
-      log(`Whip report: risk of ${expectedRebels} rebel vote(s) due to ward pressure / ambition.`);
+    const rebels = pickRebels(yourCllrs, expectedRebels, contextType);
+
+    if(rebels.length){
+      log(`Whip report: ${rebels.length} rebel(s) likely:`);
+      for(const r of rebels){
+        log(` - ${r.title} ${r.name} (${r.faction}) rebels: ${r.reason}`);
+      }
+      // rebels reduce chance
+      p -= rebels.length * 0.055;
+    } else {
+      log("Whip report: no obvious rebels (for once).");
     }
+
+    p = clamp(p, 0.05, 0.95);
+    const roll = Math.random();
     log(`Vote odds: ${(p*100).toFixed(0)}% | Roll: ${(roll*100).toFixed(0)}%`);
 
-    return passed;
+    return roll < p;
   }
 
-  // ---- Month progression
+  function pickRebels(list, count, contextType){
+    if(count<=0) return [];
+    // score each councillor’s rebel tendency based on personality + context
+    const scored = list.map(c=>{
+      let s = 0;
+
+      // low loyalty → more rebel
+      s += (70 - c.loyalty) * 0.9;
+
+      // high ward pressure → more rebel if trust is low / cuts
+      s += (c.wardPressure - 55) * 0.4;
+
+      // ambition → more leverage seeking
+      s += (c.ambition - 55) * 0.35;
+
+      // faction & context hooks
+      if(c.faction==="Localist") s += 10;
+      if(c.faction==="Ideologue") s += 7;
+
+      // trait hooks
+      if(c.traits.includes("Procedural Nerd") && S.usedAgenda && S.legalRisk>35) s += 12;
+      if(c.traits.includes("Budget Hawk") && contextType==="budget" && S.budgetGap>10) s += 14;
+      if(c.traits.includes("Ward Champion") && contextType==="budget") s += 8;
+
+      // rivalry makes rebellions more likely (spite politics)
+      if(c.rivalCid) s += 6;
+
+      // officers relationship softens some people
+      s -= (S.officers - 55) * 0.15;
+
+      // trust low increases risk
+      s += (45 - S.trust) * 0.35;
+
+      return { c, s };
+    }).sort((a,b)=>b.s-a.s);
+
+    const rebels = [];
+    for(const item of scored){
+      if(rebels.length >= count) break;
+      // only rebel above a threshold
+      if(item.s < 18) continue;
+      rebels.push({
+        ...item.c,
+        reason: buildRebelReason(item.c, contextType)
+      });
+    }
+    return rebels;
+  }
+
+  function buildRebelReason(c, contextType){
+    const bits = [];
+    if(c.faction==="Localist") bits.push("Localist: ward-first instincts");
+    if(c.faction==="Ideologue") bits.push("Ideologue: principle over discipline");
+    if(c.loyalty < 55) bits.push("low loyalty to leadership");
+    if(c.wardPressure > 70) bits.push("high ward pressure");
+    if(c.ambition > 70) bits.push("ambition: wants influence (e.g., chair role)");
+    if(c.traits.includes("Procedural Nerd")) bits.push("procedural concerns");
+    if(c.traits.includes("Budget Hawk") && contextType==="budget") bits.push("budget hawk: doesn’t like the numbers");
+    if(c.rivalCid) bits.push("rivalry politics");
+    if(!bits.length) bits.push("general dissatisfaction");
+    return bits.join("; ");
+  }
+
+  // --- Month progression
   function nextMonth(){
     if(S.phase!=="Governance") return;
 
-    // end-of-month checks
-    if(S.trust < 20){
-      endGame("Public trust collapses. You lose authority and your group moves against you.");
-      return;
-    }
-    if(S.legalRisk > 85){
-      endGame("Legal risk becomes reality. Court challenge / intervention undermines the administration.");
-      return;
-    }
+    if(S.trust < 20) return endGame("Public trust collapses. Your group moves against you.");
+    if(S.legalRisk > 85) return endGame("Legal risk becomes reality. Court challenge undermines you.");
 
-    // win condition for prototype: survive 12 months with decent trust/legal
     if(S.month >= 12){
       const win = (S.trust >= 35 && S.legalRisk <= 65);
-      if(win){
-        endGame("You survived the first year. Not glamorous, but effective. Prototype success ✅");
-      } else {
-        endGame("You limp to year end, but credibility is shot. Prototype end.");
-      }
-      return;
+      return endGame(win ? "You survived year one. Prototype success ✅" : "You limp to year end, but credibility is shot.");
     }
 
-    // advance
     S.month += 1;
     S.usedAgenda = false;
     S.didBudget = false;
@@ -667,7 +1051,6 @@
     setMonth(String(S.month));
     log(`\n=== MONTH ${S.month} ===`);
 
-    // monthly event
     const ev = pick(EVENT_POOL);
     log(`[Event] ${ev.t}`);
     if(ev.trust) S.trust = clamp(S.trust + ev.trust, 0, 100);
@@ -675,7 +1058,6 @@
     if(ev.legal) S.legalRisk = clamp(S.legalRisk + ev.legal, 0, 100);
     if(ev.budgetGap) S.budgetGap = clamp(S.budgetGap + ev.budgetGap, -20, 40);
 
-    // budget gap drifts (cost pressures)
     const drift = 1 + Math.floor(S.month/4);
     S.budgetGap = clamp(S.budgetGap + drift, -20, 40);
     log(`Cost pressure increases the budget gap by +${drift} (gap now ${S.budgetGap}).`);
@@ -684,65 +1066,6 @@
     renderGovernanceUI();
   }
 
-  // ---- Rendering
-  function partyName(id){ return PARTIES.find(p=>p.id===id)?.name || id; }
-
-  function renderSeatTable(){
-    const seats = S.seats;
-    const rows = Object.keys(seats).map(pid=>{
-      const p = PARTIES.find(x=>x.id===pid);
-      return `<tr><td><b class="${p?.color||""}">${partyName(pid)}</b> <span class="small">(${pid})</span></td><td>${seats[pid]}</td></tr>`;
-    }).join("");
-    el("seatTable").innerHTML = `
-      <table>
-        <thead><tr><th>Party</th><th>Seats</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div class="small">Next: Formation. Majority is 16 seats.</div>
-    `;
-    updateControlLabel();
-  }
-
-  function updateControlLabel(){
-    if(!S || !S.seats){ el("control").textContent="—"; return; }
-    const player = el("playerParty").value;
-    const bloc = S.controlBlocSeats ?? S.seats[player];
-    const maj = bloc >= 16;
-    el("control").textContent = maj ? `Bloc ${bloc} (Majority)` : `Bloc ${bloc} (No majority)`;
-  }
-
-  function updateTopStats(){
-    el("trust").textContent = (S?.trust ?? "—");
-    el("officers").textContent = (S?.officers ?? "—");
-    el("legalRisk").textContent = (S?.legalRisk ?? "—");
-    el("budgetGap").textContent = (S?.budgetGap ?? "—");
-    updateControlLabel();
-  }
-
-  function renderWards(){
-    const wards = S.wards;
-    const seats = S.seats || {CIV:0,LAB:0,GRN:0,CON:0};
-    const html = `
-      <table>
-        <thead><tr><th>Ward</th><th>Issue</th><th>Baseline lean</th><th>Strength</th><th>Volatility</th><th>Turnout</th></tr></thead>
-        <tbody>
-          ${wards.map(w=>`
-            <tr>
-              <td>${w.name}</td>
-              <td class="small">${w.issue}</td>
-              <td><b>${w.lean}</b></td>
-              <td>${w.strength}</td>
-              <td>${w.volatility}</td>
-              <td>${w.turnout}%</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    `;
-    el("wardsPanel").innerHTML = html;
-  }
-
-  // ---- End game
   function endGame(reason){
     log("\n=== END ===");
     log(reason);
@@ -750,7 +1073,7 @@
     setPhase("Ended");
   }
 
-  // ---- Buttons
+  // --- New Game
   el("newGameBtn").onclick = () => {
     S = {
       phase:"Setup",
@@ -762,48 +1085,58 @@
       controlBlocSeats:0,
       discipline:70,
       month:0,
-      trust: 55,
-      officers: 55,
-      legalRisk: 20,
-      budgetGap: 10,
+      trust:55,
+      officers:55,
+      legalRisk:20,
+      budgetGap:10,
       usedAgenda:false,
       didBudget:false,
       didPlanning:false,
       didScrutiny:false
     };
 
+    selectedWardId = 1;
     el("log").textContent = "";
-    log("New game created. Council has 30 fictional wards.");
+    log("New game created. 30 named wards generated.");
     log("Next: Run Election.\n");
 
     setPhase("Setup");
     setMonth("—");
 
-    renderWards();
-    updateTopStats();
     el("seatTable").innerHTML = "<div class='small'>Run the election to see seats.</div>";
     el("actions").innerHTML = "<div class='small'>Run the election to begin.</div>";
 
     el("runElectionBtn").disabled = false;
-    el("toggleWardsBtn").disabled = false;
     el("formationBtn").disabled = true;
     el("nextMonthBtn").disabled = true;
 
-    el("wardsPanel").style.display = "none";
+    el("toggleNamesBtn").disabled = false;
+
+    el("rosterFilter").disabled = true;
+    el("factionFilter").disabled = true;
+    el("roster").innerHTML = "—";
+
+    renderMap();
+    showWardInspector(1);
+    updateTopStats();
   };
 
   el("runElectionBtn").onclick = () => runElection();
   el("formationBtn").onclick = () => startFormation();
   el("nextMonthBtn").onclick = () => nextMonth();
 
-  el("toggleWardsBtn").onclick = () => {
-    const p = el("wardsPanel");
-    p.style.display = (p.style.display==="none") ? "block" : "none";
+  el("toggleNamesBtn").onclick = () => {
+    showLabels = !showLabels;
+    renderMap();
   };
 
-  // Initialize UI
+  el("rosterFilter").addEventListener("change", renderRoster);
+  el("factionFilter").addEventListener("change", renderRoster);
+
+  // Initial UI
   updateTopStats();
   el("actions").innerHTML = "<div class='small'>Click <b>New Game</b> to generate wards.</div>";
+  el("inspectBody").textContent = "Click New Game, then click a ward on the map.";
 })();
 </script>
 </body>
