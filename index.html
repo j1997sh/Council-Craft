@@ -4,27 +4,33 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Ward Manager (UK)</title>
+
 <style>
 :root{
   color-scheme: light dark;
   --bg: Canvas;
   --fg: CanvasText;
-  --muted: color-mix(in oklab, var(--fg) 60%, transparent);
-  --line: color-mix(in oklab, var(--fg) 20%, transparent);
+  --muted: color-mix(in oklab, var(--fg) 65%, transparent);
+  --line: color-mix(in oklab, var(--fg) 18%, transparent);
   --card: color-mix(in oklab, var(--bg) 92%, var(--fg) 8%);
-  --good:#0a7;
-  --bad:#b00020;
+  --radius: 14px;
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:system-ui;background:var(--bg);color:var(--fg)}
 header{
-  display:flex;gap:12px;align-items:center;
-  padding:12px 16px;border-bottom:1px solid var(--line)
+  padding:14px 16px;
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px
 }
+header h1{font-size:16px;margin:0;font-weight:900}
+nav{display:flex;gap:8px}
 nav button{
   border:1px solid var(--line);
-  background:transparent;border-radius:999px;
-  padding:6px 12px;font-weight:700;cursor:pointer;
+  background:transparent;
+  border-radius:999px;
+  padding:6px 12px;
+  font-weight:700;
+  cursor:pointer;
   color:var(--muted)
 }
 nav button.active{background:var(--card);color:var(--fg)}
@@ -32,267 +38,295 @@ main{max-width:1200px;margin:0 auto;padding:16px}
 .card{
   background:var(--card);
   border:1px solid var(--line);
-  border-radius:12px;
-  padding:14px;margin-bottom:14px
+  border-radius:var(--radius);
+  padding:14px;
+  margin-bottom:16px
 }
 .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .spacer{flex:1}
-h2{margin:0 0 8px 0}
+h2,h3{margin:0 0 6px 0}
 .small{font-size:12px;color:var(--muted)}
-button.action{
-  border:1px solid var(--line);
-  background:transparent;border-radius:10px;
-  padding:10px 12px;font-weight:700;cursor:pointer
-}
 table{width:100%;border-collapse:collapse}
 th,td{padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}
 th{color:var(--muted)}
+button.action{
+  border:1px solid var(--line);
+  background:transparent;
+  border-radius:10px;
+  padding:10px 12px;
+  font-weight:700;
+  cursor:pointer
+}
+button.action:hover{filter:brightness(1.05)}
+select{
+  border:1px solid var(--line);
+  background:transparent;
+  border-radius:10px;
+  padding:8px 10px
+}
 .log{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap}
 .hidden{display:none}
-.good{color:var(--good)}
-.bad{color:var(--bad)}
-canvas{width:100%;height:120px}
+.badge{
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:2px 8px;
+  font-size:11px;
+  color:var(--muted)
+}
 </style>
 </head>
 
 <body>
+
 <header>
   <h1>Ward Manager (UK)</h1>
   <nav>
-    <button data-screen="hq" class="active">Campaign HQ</button>
-    <button data-screen="field">Field</button>
-    <button data-screen="intel">Intel</button>
+    <button class="active" data-tab="overview">Overview</button>
+    <button data-tab="crosstabs">Crosstabs</button>
+    <button data-tab="district">District</button>
   </nav>
   <div class="spacer"></div>
-  <b id="weekLabel"></b>
+  <span class="badge" id="weekLabel"></span>
+  <button class="action" onclick="advanceWeek()">Advance Week ▶</button>
 </header>
 
 <main>
 
-<!-- HQ -->
-<section id="screen-hq">
-  <div class="card">
-    <h2>Resources</h2>
-    <div class="row">
-      <span>Money £<b id="money"></b></span>
-      <span>Energy <b id="energy"></b></span>
-      <span>Volunteers <b id="volCount"></b></span>
+<!-- ================= CAMPAIGN HQ ================= -->
+<div class="card">
+  <h2>Campaign HQ — This Week</h2>
+
+  <div class="row">
+    <span>Money: <b id="money"></b></span>
+    <span>Volunteers: <b id="vols"></b></span>
+    <span>Energy: <b id="energy"></b></span>
+  </div>
+
+  <hr/>
+
+  <div class="row" style="align-items:flex-start">
+    <div style="flex:2">
+      <h3>Add action</h3>
+
+      <div class="row">
+        <select id="hqType">
+          <option value="canvass">Door knock (segment)</option>
+          <option value="leaflet">Leaflet drop (issue)</option>
+          <option value="fundraise">Fundraise</option>
+          <option value="train">Volunteer training</option>
+        </select>
+
+        <select id="hqDistrict"></select>
+        <select id="hqDetail"></select>
+
+        <button class="action" onclick="addHQ()">Add</button>
+      </div>
+
+      <div class="small">
+        Actions cost resources and directly affect districts.
+      </div>
+    </div>
+
+    <div style="flex:3">
+      <h3>Planned actions</h3>
+      <table>
+        <thead>
+          <tr><th>Action</th><th>Target</th><th>Cost</th><th></th></tr>
+        </thead>
+        <tbody id="hqQueue"></tbody>
+      </table>
+      <div class="small">At least one action required to advance.</div>
     </div>
   </div>
+</div>
 
-  <div class="card">
-    <h2>Fundraising</h2>
-    <div class="row">
-      <button class="action" onclick="fundraise('small')">Email small donors</button>
-      <button class="action" onclick="fundraise('local')">Call local donors</button>
-      <button class="action" onclick="fundraise('event')">Fundraising event</button>
-    </div>
-    <div class="small">
-      Donor fatigue applies. Reputational risk on high-value donors.
-    </div>
-  </div>
+<!-- ================= OVERVIEW ================= -->
+<div class="card tab" id="tab-overview">
+  <h2>District summary (latent)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>District</th><th>You</th><th>Con</th><th>Lab</th><th>Ind</th>
+      </tr>
+    </thead>
+    <tbody id="districtTable"></tbody>
+  </table>
+</div>
 
-  <div class="card">
-    <h2>Campaign Actions</h2>
-    <div class="row">
-      <button class="action" onclick="canvass()">Door knock</button>
-      <button class="action" onclick="leaflet()">Leaflet drop</button>
-      <button class="action" onclick="rest()">Rest candidate</button>
-    </div>
+<!-- ================= CROSSTABS ================= -->
+<div class="card tab hidden" id="tab-crosstabs">
+  <h2>Crosstabs (directional)</h2>
+  <div class="small">
+    Crosstabs removed from main loop; this view is informational only.
   </div>
-</section>
+</div>
 
-<!-- FIELD -->
-<section id="screen-field" class="hidden">
-  <div class="card">
-    <h2>Districts (latent)</h2>
-    <table>
-      <thead>
-        <tr><th>District</th><th>You</th><th>Con</th><th>Lab</th><th>Ind</th></tr>
-      </thead>
-      <tbody id="districtTable"></tbody>
-    </table>
-  </div>
-</section>
+<!-- ================= DISTRICT ================= -->
+<div class="card tab hidden" id="tab-district">
+  <h2>District detail</h2>
+  <div class="small">Select a district above to drill in.</div>
+</div>
 
-<!-- INTEL -->
-<section id="screen-intel" class="hidden">
-  <div class="card">
-    <h2>Polling trend</h2>
-    <canvas id="trend"></canvas>
-    <div class="small">Internal polling (noisy)</div>
-  </div>
-
-  <div class="card">
-    <h2>Campaign log</h2>
-    <div class="log" id="log"></div>
-  </div>
-
-  <div class="card" id="postElection" class="hidden">
-    <h2>Post-Election Analysis</h2>
-    <div class="log" id="analysis"></div>
-  </div>
-</section>
+<!-- ================= LOG ================= -->
+<div class="card">
+  <h2>Campaign log</h2>
+  <div class="log" id="log"></div>
+</div>
 
 </main>
 
 <script>
-/* ---------- STATE ---------- */
+/* ================= STATE ================= */
 const GAME={
-  week:1,totalWeeks:20,
-  money:5000,energy:80,
-  donors:{
-    small:{fatigue:0.1},
-    local:{fatigue:0.1},
-    event:{fatigue:0}
-  },
+  week:1,totalWeeks:24,
+  money:6200,vols:110,energy:85,
   districts:[
-    {n:"Riverside",s:{you:.24,con:.28,lab:.36,ind:.12}},
-    {n:"Old Greybridge",s:{you:.26,con:.42,lab:.22,ind:.10}},
-    {n:"Kingsway",s:{you:.32,con:.30,lab:.26,ind:.12}},
-    {n:"St Mark’s",s:{you:.18,con:.52,lab:.20,ind:.10}},
-    {n:"Industrial",s:{you:.29,con:.26,lab:.33,ind:.12}},
+    {name:"Riverside Estate",s:{you:.274,con:.303,lab:.322,ind:.10}},
+    {name:"Old Greybridge",s:{you:.260,con:.355,lab:.289,ind:.096}},
+    {name:"Kingsway Newbuilds",s:{you:.295,con:.306,lab:.299,ind:.10}},
+    {name:"St. Mark’s Village",s:{you:.257,con:.364,lab:.283,ind:.096}},
+    {name:"Industrial Crescent",s:{you:.267,con:.307,lab:.329,ind:.097}},
   ],
-  opponents:{
-    con:{budget:6000,style:"defensive"},
-    lab:{budget:4500,style:"ground"}
-  },
-  trend:[],
-  log:[]
+  hq:[ ],
+  log:[ ]
 };
 
-/* ---------- NAV ---------- */
+/* ================= NAV ================= */
 document.querySelectorAll("nav button").forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
     b.classList.add("active");
-    document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
-    document.getElementById("screen-"+b.dataset.screen).classList.remove("hidden");
+    document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));
+    document.getElementById("tab-"+b.dataset.tab).classList.remove("hidden");
   };
 });
 
-/* ---------- FUNDRAISING ---------- */
-function fundraise(type){
-  let base={small:300,local:700,event:1400}[type];
-  let fatigue=GAME.donors[type].fatigue;
-  let gain=Math.max(0,Math.floor(base*(1-fatigue)));
-  GAME.money+=gain;
-  GAME.energy-=5;
-  GAME.donors[type].fatigue=Math.min(0.9,fatigue+0.15);
-  GAME.log.push(`Fundraising (${type}) raised £${gain}.`);
-  if(type==="local"&&Math.random()<0.3)
-    GAME.log.push("Whispers about donor influence.");
-  endWeek();
-}
-
-/* ---------- ACTIONS ---------- */
-function canvass(){
-  if(GAME.energy<10)return;
-  GAME.energy-=10;
-  let d=pick(GAME.districts);
-  d.s.you+=0.015;
-  GAME.log.push(`Canvassing improved support in ${d.n}.`);
-  endWeek();
-}
-function leaflet(){
-  if(GAME.money<300)return;
-  GAME.money-=300;
-  let d=pick(GAME.districts);
-  d.s.you+=0.01;
-  GAME.log.push(`Leaflets helped in ${d.n}.`);
-  endWeek();
-}
-function rest(){
-  GAME.energy=Math.min(100,GAME.energy+25);
-  GAME.log.push("Candidate rested.");
-  endWeek();
-}
-
-/* ---------- OPPONENT AI ---------- */
-function opponentTurn(){
-  // Conservative: protect strongholds late
-  if(GAME.opponents.con.budget>500){
-    let d=GAME.districts.find(x=>x.s.con>0.4);
-    if(d){d.s.con+=0.01;GAME.opponents.con.budget-=400;}
-  }
-  // Labour: ground game in marginal
-  if(GAME.opponents.lab.budget>400){
-    let d=GAME.districts.find(x=>Math.abs(x.s.lab-x.s.you)<0.06);
-    if(d){d.s.lab+=0.012;GAME.opponents.lab.budget-=300;}
-  }
-}
-
-/* ---------- TURN ---------- */
-function endWeek(){
-  opponentTurn();
-  GAME.trend.push(pollEstimate());
-  GAME.week++;
-  if(GAME.week>GAME.totalWeeks) return endElection();
-  render();
-}
-
-/* ---------- POLLING ---------- */
-function pollEstimate(){
-  let avg=GAME.districts.reduce((a,d)=>a+d.s.you,0)/GAME.districts.length;
-  return avg+(Math.random()-.5)*0.03;
-}
-
-/* ---------- ELECTION ---------- */
-function endElection(){
-  let totals={you:0,con:0,lab:0,ind:0};
+/* ================= HQ ================= */
+function populateHQ(){
+  hqDistrict.innerHTML="";
   GAME.districts.forEach(d=>{
-    for(let k in d.s) totals[k]+=d.s[k];
+    const o=document.createElement("option");
+    o.value=d.name;o.textContent=d.name;
+    hqDistrict.appendChild(o);
   });
-  let winner=Object.entries(totals).sort((a,b)=>b[1]-a[1])[0][0];
-  let a=`RESULT\nWinner: ${winner.toUpperCase()}\n\n`;
-  for(let k in totals) a+=`${k}: ${(totals[k]*100).toFixed(1)}%\n`;
-  document.getElementById("analysis").textContent=a;
-  document.getElementById("postElection").classList.remove("hidden");
+  updateHQDetail();
+}
+
+hqType.onchange=updateHQDetail;
+
+function updateHQDetail(){
+  hqDetail.innerHTML="";
+  const t=hqType.value;
+  let opts=[];
+  if(t==="canvass") opts=["Young renters","Older owners","Working families"];
+  if(t==="leaflet") opts=["ASB","Parking","Council tax","Housing"];
+  if(t==="fundraise") opts=["Email list","Local donors","Event"];
+  if(t==="train") opts=["Volunteers"];
+  opts.forEach(v=>{
+    const o=document.createElement("option");
+    o.value=v;o.textContent=v;
+    hqDetail.appendChild(o);
+  });
+}
+
+function addHQ(){
+  GAME.hq.push({
+    type:hqType.value,
+    district:hqDistrict.value,
+    detail:hqDetail.value
+  });
+  renderHQ();
+}
+
+function removeHQ(i){
+  GAME.hq.splice(i,1);
+  renderHQ();
+}
+
+function renderHQ(){
+  hqQueue.innerHTML="";
+  GAME.hq.forEach((a,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${a.type}</td>
+      <td>${a.district} / ${a.detail}</td>
+      <td>${hqCost(a)}</td>
+      <td><button class="action" onclick="removeHQ(${i})">✕</button></td>
+    `;
+    hqQueue.appendChild(tr);
+  });
+}
+
+function hqCost(a){
+  if(a.type==="canvass") return "Energy −8, Vol −10";
+  if(a.type==="leaflet") return "£300, Vol −8";
+  if(a.type==="fundraise") return "Energy −6";
+  if(a.type==="train") return "£200";
+  return "—";
+}
+
+/* ================= TURN ================= */
+function advanceWeek(){
+  if(GAME.hq.length===0){
+    alert("Plan at least one campaign action.");
+    return;
+  }
+
+  GAME.hq.forEach(a=>{
+    const d=GAME.districts.find(x=>x.name===a.district);
+    if(a.type==="canvass"){
+      d.s.you+=0.01;
+      GAME.energy-=8;
+    }
+    if(a.type==="leaflet"){
+      GAME.money-=300;
+      d.s.you+=0.008;
+    }
+    if(a.type==="fundraise"){
+      const g=400+Math.floor(Math.random()*400);
+      GAME.money+=g;
+      GAME.energy-=6;
+      GAME.log.push(`Fundraised £${g}.`);
+    }
+    if(a.type==="train"){
+      GAME.money-=200;
+      GAME.log.push("Volunteers trained.");
+    }
+  });
+
+  GAME.hq=[];
+  GAME.week++;
   render();
 }
 
-/* ---------- RENDER ---------- */
+/* ================= RENDER ================= */
 function render(){
   weekLabel.textContent=`Week ${GAME.week}/${GAME.totalWeeks}`;
-  money.textContent=GAME.money;
+  money.textContent=`£${GAME.money}`;
+  vols.textContent=GAME.vols;
   energy.textContent=GAME.energy;
-  volCount.textContent=3;
 
   districtTable.innerHTML="";
   GAME.districts.forEach(d=>{
-    let r=document.createElement("tr");
-    r.innerHTML=`<td>${d.n}</td>
-      <td>${(d.s.you*100).toFixed(1)}</td>
-      <td>${(d.s.con*100).toFixed(1)}</td>
-      <td>${(d.s.lab*100).toFixed(1)}</td>
-      <td>${(d.s.ind*100).toFixed(1)}</td>`;
-    districtTable.appendChild(r);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${d.name}</td>
+      <td>${(d.s.you*100).toFixed(1)}%</td>
+      <td>${(d.s.con*100).toFixed(1)}%</td>
+      <td>${(d.s.lab*100).toFixed(1)}%</td>
+      <td>${(d.s.ind*100).toFixed(1)}%</td>
+    `;
+    districtTable.appendChild(tr);
   });
 
-  drawTrend();
-  log.textContent=GAME.log.slice(-10).join("\n");
+  log.textContent=GAME.log.slice(-10).join("\n")||"—";
+  renderHQ();
 }
 
-/* ---------- TREND GRAPH ---------- */
-function drawTrend(){
-  const c=document.getElementById("trend");
-  const ctx=c.getContext("2d");
-  ctx.clearRect(0,0,c.width,c.height);
-  ctx.beginPath();
-  GAME.trend.forEach((v,i)=>{
-    let x=i*(c.width/(GAME.trend.length-1||1));
-    let y=c.height*(1-v);
-    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
-  });
-  ctx.strokeStyle="currentColor";
-  ctx.stroke();
-}
-
-/* ---------- UTILS ---------- */
-function pick(a){return a[Math.floor(Math.random()*a.length)]}
-
-/* INIT */
+/* ================= INIT ================= */
+populateHQ();
 render();
 </script>
+
 </body>
 </html>
