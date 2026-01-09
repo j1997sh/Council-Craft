@@ -3,30 +3,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Single Ward Deep-Dive Simulation — "Millbrook" (Council Ward)</title>
+  <title>Ward Deep-Dive — 20-Turn Local Campaign Simulation (Locked Setup after Week 1)</title>
   <style>
-    :root{--bg:#0b1020;--card:#111a33;--muted:#8aa0c6;--text:#e9f0ff;--good:#45e0a8;--bad:#ff6b6b;--warn:#ffd166;--accent:#67a2ff}
+    :root{
+      --bg:#0b1020;--card:#111a33;--muted:#8aa0c6;--text:#e9f0ff;
+      --good:#45e0a8;--bad:#ff6b6b;--warn:#ffd166;--accent:#67a2ff;
+      --line:rgba(255,255,255,.08)
+    }
     *{box-sizing:border-box}
-    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:linear-gradient(180deg,#070a14 0%, #0b1020 45%, #070a14 100%)}
-    header{padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;background:rgba(7,10,20,.92);backdrop-filter:blur(10px);z-index:10}
-    h1{margin:0;font-size:16px;font-weight:650;letter-spacing:.2px}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);
+      background:linear-gradient(180deg,#070a14 0%, #0b1020 45%, #070a14 100%)}
+    header{padding:16px 16px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(7,10,20,.92);
+      backdrop-filter:blur(10px);z-index:10}
+    h1{margin:0;font-size:15px;font-weight:720;letter-spacing:.2px}
     header .sub{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.25}
-    main{padding:16px;max-width:1200px;margin:0 auto}
-    .grid{display:grid;grid-template-columns:360px 1fr;gap:14px}
-    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
+    main{padding:14px;max-width:1280px;margin:0 auto}
+    .grid{display:grid;grid-template-columns:390px 1fr;gap:12px}
+    @media (max-width: 1080px){.grid{grid-template-columns:1fr}}
     .card{background:linear-gradient(180deg,rgba(17,26,51,.92),rgba(17,26,51,.72));
-      border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.35)}
+      border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.35)}
     .card h2{margin:0 0 10px;font-size:13px;color:#cfe1ff}
     .row{display:flex;gap:10px;flex-wrap:wrap}
-    .kpi{flex:1;min-width:150px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px}
+    .kpi{flex:1;min-width:160px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+      border-radius:12px;padding:10px}
     .kpi .label{font-size:11px;color:var(--muted)}
-    .kpi .value{font-size:18px;font-weight:700;margin-top:4px}
+    .kpi .value{font-size:18px;font-weight:800;margin-top:4px}
     .kpi .hint{font-size:11px;color:var(--muted);margin-top:2px}
-    .barwrap{margin-top:10px}
-    .bar{height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
-    .bar>span{display:block;height:100%}
-    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
-    .dot{width:10px;height:10px;border-radius:999px;display:inline-block;margin-right:6px}
+    .divider{height:1px;background:var(--line);margin:12px 0}
     .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .controls .full{grid-column:1/-1}
     label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}
@@ -38,7 +41,7 @@
     input[type="range"]{accent-color:var(--accent)}
     button{
       background:linear-gradient(180deg,rgba(103,162,255,.95),rgba(103,162,255,.72));
-      color:#081026;border:none;border-radius:12px;padding:10px 12px;font-weight:700;cursor:pointer;
+      color:#081026;border:none;border-radius:12px;padding:10px 12px;font-weight:800;cursor:pointer;
       box-shadow:0 8px 18px rgba(103,162,255,.25)
     }
     button.secondary{
@@ -48,92 +51,106 @@
     button.danger{
       background:linear-gradient(180deg,rgba(255,107,107,.95),rgba(255,107,107,.72));color:#250909
     }
+    button:disabled{opacity:.45;cursor:not-allowed}
     .btnrow{display:flex;gap:10px;flex-wrap:wrap}
     .small{font-size:11px;color:var(--muted);line-height:1.35}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    .barwrap{margin-top:10px}
+    .bar{height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+    .bar>span{display:block;height:100%}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+    .dot{width:10px;height:10px;border-radius:999px;display:inline-block;margin-right:6px}
     table{width:100%;border-collapse:separate;border-spacing:0 8px}
     td,th{font-size:12px;padding:9px 10px}
-    th{color:var(--muted);font-weight:600;text-align:left}
-    tr{
-      background:rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.07);
-    }
+    th{color:var(--muted);font-weight:650;text-align:left}
+    tr{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
     tr td:first-child, tr th:first-child{border-top-left-radius:12px;border-bottom-left-radius:12px}
     tr td:last-child, tr th:last-child{border-top-right-radius:12px;border-bottom-right-radius:12px}
-    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05)}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:11px;
+      border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05)}
     .pill.good{border-color:rgba(69,224,168,.35);color:#bff7e5}
     .pill.bad{border-color:rgba(255,107,107,.35);color:#ffd0d0}
     .pill.warn{border-color:rgba(255,209,102,.35);color:#fff1c9}
-    .log{height:270px;overflow:auto;padding-right:8px}
-    .logitem{
-      padding:10px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);
-      background:rgba(0,0,0,.22);margin-bottom:10px
-    }
+    .log{height:320px;overflow:auto;padding-right:8px}
+    .logitem{padding:10px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);
+      background:rgba(0,0,0,.22);margin-bottom:10px}
     .logitem .t{display:flex;justify-content:space-between;gap:10px}
     .logitem .t .when{font-size:11px;color:var(--muted)}
     .logitem .t .tag{font-size:11px}
     .logitem .msg{margin-top:6px;font-size:12px;line-height:1.35;color:#dbe7ff}
     .muted{color:var(--muted)}
-    .divider{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
     .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    @media (max-width: 980px){.two{grid-template-columns:1fr}}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    @media (max-width: 1080px){.two{grid-template-columns:1fr}}
+    .callout{padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.04)}
+    .locked{outline:2px solid rgba(255,209,102,.25)}
   </style>
 </head>
 <body>
 <header>
-  <h1>Single Ward Deep-Dive Simulation — Millbrook (20-seat Council)</h1>
+  <h1>Ward Deep-Dive — 20-Turn Campaign Simulation (Setup locks after Turn 1)</h1>
   <div class="sub">
-    You are the <b>Conservative Campaign Manager</b>. This ward is a classic marginal.
-    Everything here is <b>model-driven</b>: canvass bias, polling error, issue salience, message drift, GOTV, and volunteer burnout.
+    One ward, deep mechanics: <b>voter file</b>, <b>microtargeting</b>, <b>canvass bias</b>, <b>postal vote chase</b>, <b>persuasion vs GOTV</b>,
+    <b>opponent behaviour</b>, <b>budget & burn rate</b>, <b>message discipline</b>, <b>field capacity</b>, and <b>election-day execution</b>.
   </div>
 </header>
 
 <main>
   <div class="grid">
-    <!-- LEFT: Controls / inputs -->
-    <section class="card">
-      <h2>Ward Setup & Strategy</h2>
+    <!-- LEFT -->
+    <section class="card" id="setupCard">
+      <h2>Setup (Locks after Turn 1)</h2>
 
       <div class="controls">
+        <div class="full callout">
+          <div class="small">
+            <b>Turns:</b> 20 total. Turn 1 is your “plan lock-in” week. After you run Turn 1, demographics/volatility/baselines are locked.
+            You can still change tactics every turn (allocation, targeting, script, comms, etc.).
+          </div>
+        </div>
+
         <div>
-          <label>Weeks to election (simulation clock)</label>
-          <input id="weeksToElection" type="number" min="1" max="52" step="1" value="18" />
-          <div class="small">Lower weeks increases volatility and media sensitivity.</div>
+          <label>Ward name (flavour)</label>
+          <input id="wardName" type="text" value="Millbrook" />
         </div>
 
         <div>
           <label>Electorate</label>
           <input id="electorate" type="number" min="1500" max="12000" step="50" value="4800" />
-          <div class="small">Affects total votes and ground-game scale.</div>
         </div>
 
         <div class="full">
-          <label>Base Turnout (%)</label>
+          <label>Baseline turnout (%)</label>
           <input id="turnoutBase" type="range" min="25" max="60" value="38" />
-          <div class="small"><span id="turnoutBaseVal" class="mono"></span> — baseline before GOTV, weather, scandals.</div>
+          <div class="small"><span id="turnoutBaseVal" class="mono"></span> — before GOTV, weather, postal dynamics.</div>
         </div>
 
         <div class="full">
-          <label>Ward volatility (how swingy the voters are)</label>
+          <label>Volatility (swinginess)</label>
           <input id="volatility" type="range" min="0" max="100" value="62" />
-          <div class="small"><span id="volatilityVal" class="mono"></span> — higher means issues + events move voters more.</div>
+          <div class="small"><span id="volatilityVal" class="mono"></span> — higher: events and issues move intention more.</div>
         </div>
 
         <div class="full">
-          <label>Issue Salience (how much each issue matters locally)</label>
+          <label>Opposition strength (local organisation)</label>
+          <input id="oppStrength" type="range" min="0" max="100" value="64" />
+          <div class="small"><span id="oppStrengthVal" class="mono"></span> — affects their turnout machine and attack frequency.</div>
+        </div>
+
+        <div class="full">
+          <label>Issue salience</label>
           <div class="two">
             <div>
-              <label>Local Services</label>
+              <label>Local services</label>
               <input id="salienceServices" type="range" min="0" max="100" value="75" />
               <div class="small"><span id="salienceServicesVal" class="mono"></span></div>
             </div>
             <div>
-              <label>Housing & Development</label>
+              <label>Housing & planning</label>
               <input id="salienceHousing" type="range" min="0" max="100" value="82" />
               <div class="small"><span id="salienceHousingVal" class="mono"></span></div>
             </div>
             <div>
-              <label>Tax & Value for Money</label>
+              <label>Council tax & value</label>
               <input id="salienceTax" type="range" min="0" max="100" value="58" />
               <div class="small"><span id="salienceTaxVal" class="mono"></span></div>
             </div>
@@ -148,7 +165,79 @@
         <div class="full divider"></div>
 
         <div>
-          <label>Message Emphasis</label>
+          <label>Candidate archetype</label>
+          <select id="candidateStyle">
+            <option value="disciplined" selected>Disciplined operator</option>
+            <option value="charismatic">Charismatic maverick</option>
+            <option value="localHero">Deep local roots</option>
+            <option value="gaffeProne">Gaffe-prone grinder</option>
+          </select>
+          <div class="small">Affects persuasion, gaffe risk, and data quality.</div>
+        </div>
+
+        <div>
+          <label>Baseline budget (£)</label>
+          <input id="budget" type="number" min="500" max="25000" step="50" value="4500" />
+          <div class="small">Covers print, digital, polling, postage, and staff overtime.</div>
+        </div>
+
+        <div class="full divider"></div>
+
+        <div class="full btnrow">
+          <button id="btnReset" class="secondary">Regenerate Ward</button>
+          <button id="btnTurn">Run Turn</button>
+          <button id="btnAuto" class="secondary">Run 5 Turns</button>
+          <button id="btnPoll" class="secondary">Commission Poll</button>
+          <button id="btnEvent" class="danger">Force Random Event</button>
+        </div>
+
+        <div class="full small">
+          After setup locks, you will play each turn by choosing a <b>weekly plan</b>: allocate hours & budget across
+          <b>Canvass</b>, <b>Leaflet</b>, <b>Digital</b>, <b>Postal chase</b>, <b>Persuasion calls</b>, <b>GOTV prep</b>, <b>Candidate time</b>.
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h2>Weekly Plan (Editable Every Turn)</h2>
+      <div class="controls">
+        <div>
+          <label>Field hours this turn</label>
+          <input id="fieldHours" type="range" min="0" max="220" value="95" />
+          <div class="small"><span id="fieldHoursVal" class="mono"></span> — total volunteer capacity committed this week.</div>
+        </div>
+
+        <div>
+          <label>Candidate hours this turn</label>
+          <input id="candHours" type="range" min="0" max="55" value="18" />
+          <div class="small"><span id="candHoursVal" class="mono"></span> — doorstep/visits/media. Too high increases gaffe risk.</div>
+        </div>
+
+        <div class="full">
+          <label>Targeting mode</label>
+          <select id="targetMode">
+            <option value="base">Base-building (expand IDs)</option>
+            <option value="persuade" selected>Persuasion in persuadable segments</option>
+            <option value="defend">Defend identified supporters</option>
+            <option value="postal">Postal vote chase focus</option>
+            <option value="gotv">GOTV preparation</option>
+          </select>
+          <div class="small">Targeting affects who you contact and how biased your canvass data becomes.</div>
+        </div>
+
+        <div class="full">
+          <label>Canvass script</label>
+          <select id="script">
+            <option value="tight" selected>Tight & disciplined (lower conversion, cleaner data)</option>
+            <option value="warm">Warm & relational (higher conversion, more variance)</option>
+            <option value="wedge">Wedge issue (high upside, backlash risk)</option>
+            <option value="negative">Contrast attack (short-term shift, burnout + backlash)</option>
+          </select>
+          <div class="small">Scripts trade conversion vs backlash vs data integrity.</div>
+        </div>
+
+        <div>
+          <label>Message emphasis</label>
           <select id="message">
             <option value="services">Protect services & fix basics</option>
             <option value="housing">Control development & local planning</option>
@@ -156,74 +245,78 @@
             <option value="crime">Tough on ASB, visible enforcement</option>
             <option value="balanced" selected>Balanced & hyper-local</option>
           </select>
-          <div class="small">This changes persuasion by issue alignment and can trigger backlash if misaligned.</div>
         </div>
 
         <div>
-          <label>Candidate style</label>
-          <select id="candidateStyle">
-            <option value="disciplined" selected>Disciplined operator</option>
-            <option value="charismatic">Charismatic maverick</option>
-            <option value="localHero">Deep local roots</option>
-            <option value="gaffeProne">Gaffe-prone grinder</option>
-          </select>
-          <div class="small">Impacts doorstep conversion, media risk, and data quality.</div>
-        </div>
-
-        <div class="full">
-          <label>Activist hours / week allocated to this ward</label>
-          <input id="activistHours" type="range" min="0" max="220" value="95" />
-          <div class="small"><span id="activistHoursVal" class="mono"></span> — includes canvassing, delivery, phonebanks, GOTV prep.</div>
-        </div>
-
-        <div class="full">
-          <label>Data discipline (how strict you are on clean canvass returns)</label>
+          <label>Data discipline</label>
           <input id="dataDiscipline" type="range" min="0" max="100" value="68" />
-          <div class="small"><span id="dataDisciplineVal" class="mono"></span> — higher reduces bias but slows coverage and annoys activists.</div>
+          <div class="small"><span id="dataDisciplineVal" class="mono"></span> — reduces bias, increases admin friction.</div>
         </div>
 
-        <div class="full divider"></div>
-
-        <div class="full btnrow">
-          <button id="btnReset" class="secondary">Reset Ward</button>
-          <button id="btnWeek">Run 1 Week</button>
-          <button id="btn4Weeks" class="secondary">Run 4 Weeks</button>
-          <button id="btnPoll" class="secondary">Commission Ward Poll</button>
-          <button id="btnGOTV" class="secondary">Run GOTV Push (1 week)</button>
-          <button id="btnScandal" class="danger">Trigger Random Event</button>
+        <div class="full">
+          <label>Spend this turn (£)</label>
+          <input id="spend" type="number" min="0" max="5000" step="10" value="180" />
+          <div class="small">Allocated automatically across: print, digital, postage, polling deposit (if ordered), and misc.</div>
         </div>
+      </div>
 
-        <div class="full small">
-          Tip: Use <b>canvass</b> to improve your voter model. Use <b>polls</b> to correct model drift (but polls can be wrong or leak).
-          Use <b>GOTV</b> late — it increases turnout among your identified supporters, but burns out activists.
+      <div class="divider"></div>
+      <div class="callout">
+        <div class="small">
+          <b>Mechanics note:</b> This sim separates <b>True Intention</b> (hidden) from your <b>Model</b> (what you think is true).
+          Canvass creates <b>biased samples</b>. Polls are a noisy anchor with delay + leak risk.
+          Postal vote chase converts intention into earlier “banked” votes — but only if you have IDs and capacity.
         </div>
       </div>
     </section>
 
-    <!-- RIGHT: Dashboards -->
+    <!-- RIGHT -->
     <section class="card">
       <h2>Ward Dashboard</h2>
 
       <div class="row">
         <div class="kpi">
-          <div class="label">Internal Model (Con share)</div>
+          <div class="label">Turn</div>
+          <div id="kpiTurn" class="value">—</div>
+          <div id="kpiTurnHint" class="hint">20 turns total</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Budget Remaining</div>
+          <div id="kpiBudget" class="value">—</div>
+          <div id="kpiBudgetHint" class="hint">burn rate matters</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Internal Model (Con)</div>
           <div id="kpiModel" class="value">—</div>
           <div id="kpiModelHint" class="hint">—</div>
         </div>
         <div class="kpi">
-          <div class="label">Estimated Win Chance</div>
+          <div class="label">Win Chance</div>
           <div id="kpiWin" class="value">—</div>
           <div id="kpiWinHint" class="hint">—</div>
         </div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
         <div class="kpi">
           <div class="label">Data Confidence</div>
           <div id="kpiConf" class="value">—</div>
           <div id="kpiConfHint" class="hint">—</div>
         </div>
         <div class="kpi">
-          <div class="label">Activist Burnout</div>
+          <div class="label">Volunteer Burnout</div>
           <div id="kpiBurn" class="value">—</div>
           <div id="kpiBurnHint" class="hint">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Postal Votes Banked (Con)</div>
+          <div id="kpiPV" class="value">—</div>
+          <div id="kpiPVHint" class="hint">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">GOTV Readiness</div>
+          <div id="kpiGOTV" class="value">—</div>
+          <div id="kpiGOTVHint" class="hint">—</div>
         </div>
       </div>
 
@@ -248,7 +341,6 @@
             <div class="small muted">Other</div>
             <div class="bar"><span id="barOth" style="width:0%;background:rgba(69,224,168,.85)"></span></div>
           </div>
-
           <div class="legend">
             <span><span class="dot" style="background:var(--accent)"></span>Con</span>
             <span><span class="dot" style="background:rgba(255,107,107,.9)"></span>Lab</span>
@@ -258,19 +350,13 @@
         </div>
 
         <div class="card" style="padding:12px">
-          <h2 style="margin-bottom:6px">Field Operations (This Week)</h2>
+          <h2 style="margin-bottom:6px">Voter File & Segment Health</h2>
           <table>
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Value</th>
-                <th>Note</th>
-              </tr>
-            </thead>
-            <tbody id="opsTable"></tbody>
+            <thead><tr><th>Segment</th><th>Size</th><th>Con Lean</th><th>Contacted</th></tr></thead>
+            <tbody id="segTable"></tbody>
           </table>
           <div class="small muted">
-            Doorstep results influence your model, but can be biased by route choice, volunteer skill, and candidate vibes.
+            Targeting changes which segments you hit. Contacted ≠ persuaded; it mostly improves <b>IDs</b> and <b>turnout targeting</b>.
           </div>
         </div>
       </div>
@@ -279,11 +365,13 @@
 
       <div class="two">
         <div class="card" style="padding:12px">
-          <h2 style="margin-bottom:8px">Targeting Recommendation</h2>
-          <div id="targeting" class="small">—</div>
-          <div class="divider"></div>
+          <h2 style="margin-bottom:6px">This Turn’s Operations</h2>
+          <table>
+            <thead><tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr></thead>
+            <tbody id="opsTable"></tbody>
+          </table>
           <div class="small muted">
-            This is a single-ward slice: the “right” play depends on what else is happening across the 20-seat council map.
+            Canvass data is biased; high discipline reduces bias but lowers coverage. Scripts trade conversion vs backlash.
           </div>
         </div>
 
@@ -297,23 +385,10 @@
 </main>
 
 <script>
-/**
- * SINGLE WARD SIMULATION
- * - Underlying "true" voter intention distribution (hidden)
- * - Your internal model (estimated) updated via canvass returns and occasional polls
- * - Events shift true intention and turnout; you can mitigate with message alignment + discipline
- *
- * This is intentionally simplified but deep:
- *  - Canvass returns are biased; data discipline reduces bias but reduces coverage.
- *  - Activist hours create contact volume, but burnout reduces effectiveness and increases errors.
- *  - Candidate traits affect persuasion, gaffe risk, and canvass data quality.
- *  - A ward poll can correct model drift but includes sampling error, house effects, and leak risk.
- */
-
+/* ========= Utilities ========= */
 function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
 function rnd(){ return Math.random(); }
 function rnorm(mean=0, sd=1){
-  // Box-Muller
   let u=0, v=0;
   while(u===0) u=rnd();
   while(v===0) v=rnd();
@@ -322,30 +397,54 @@ function rnorm(mean=0, sd=1){
 }
 function fmtPct(x){ return (x*100).toFixed(1) + "%"; }
 function fmtInt(x){ return Math.round(x).toLocaleString("en-GB"); }
+function fmtGBP(x){ return "£" + Math.round(x).toLocaleString("en-GB"); }
 
+function softNormalize(p){
+  const s = p.con + p.lab + p.ld + p.oth;
+  p.con/=s; p.lab/=s; p.ld/=s; p.oth/=s;
+  return p;
+}
+function pill(text, kind){
+  return `<span class="pill ${kind||""}">${text}</span>`;
+}
+
+/* ========= UI ========= */
 const UI = {
-  weeksToElection: document.getElementById("weeksToElection"),
+  setupCard: document.getElementById("setupCard"),
+  wardName: document.getElementById("wardName"),
   electorate: document.getElementById("electorate"),
   turnoutBase: document.getElementById("turnoutBase"),
   volatility: document.getElementById("volatility"),
+  oppStrength: document.getElementById("oppStrength"),
   salienceServices: document.getElementById("salienceServices"),
   salienceHousing: document.getElementById("salienceHousing"),
   salienceTax: document.getElementById("salienceTax"),
   salienceCrime: document.getElementById("salienceCrime"),
-  message: document.getElementById("message"),
   candidateStyle: document.getElementById("candidateStyle"),
-  activistHours: document.getElementById("activistHours"),
+  budget: document.getElementById("budget"),
+
+  fieldHours: document.getElementById("fieldHours"),
+  candHours: document.getElementById("candHours"),
+  targetMode: document.getElementById("targetMode"),
+  script: document.getElementById("script"),
+  message: document.getElementById("message"),
   dataDiscipline: document.getElementById("dataDiscipline"),
+  spend: document.getElementById("spend"),
 
   turnoutBaseVal: document.getElementById("turnoutBaseVal"),
   volatilityVal: document.getElementById("volatilityVal"),
+  oppStrengthVal: document.getElementById("oppStrengthVal"),
   salienceServicesVal: document.getElementById("salienceServicesVal"),
   salienceHousingVal: document.getElementById("salienceHousingVal"),
   salienceTaxVal: document.getElementById("salienceTaxVal"),
   salienceCrimeVal: document.getElementById("salienceCrimeVal"),
-  activistHoursVal: document.getElementById("activistHoursVal"),
+  fieldHoursVal: document.getElementById("fieldHoursVal"),
+  candHoursVal: document.getElementById("candHoursVal"),
   dataDisciplineVal: document.getElementById("dataDisciplineVal"),
 
+  kpiTurn: document.getElementById("kpiTurn"),
+  kpiBudget: document.getElementById("kpiBudget"),
+  kpiBudgetHint: document.getElementById("kpiBudgetHint"),
   kpiModel: document.getElementById("kpiModel"),
   kpiModelHint: document.getElementById("kpiModelHint"),
   kpiWin: document.getElementById("kpiWin"),
@@ -354,125 +453,33 @@ const UI = {
   kpiConfHint: document.getElementById("kpiConfHint"),
   kpiBurn: document.getElementById("kpiBurn"),
   kpiBurnHint: document.getElementById("kpiBurnHint"),
+  kpiPV: document.getElementById("kpiPV"),
+  kpiPVHint: document.getElementById("kpiPVHint"),
+  kpiGOTV: document.getElementById("kpiGOTV"),
+  kpiGOTVHint: document.getElementById("kpiGOTVHint"),
 
   barCon: document.getElementById("barCon"),
   barLab: document.getElementById("barLab"),
   barLD: document.getElementById("barLD"),
   barOth: document.getElementById("barOth"),
 
+  segTable: document.getElementById("segTable"),
   opsTable: document.getElementById("opsTable"),
-  targeting: document.getElementById("targeting"),
   log: document.getElementById("log"),
 
   btnReset: document.getElementById("btnReset"),
-  btnWeek: document.getElementById("btnWeek"),
-  btn4Weeks: document.getElementById("btn4Weeks"),
+  btnTurn: document.getElementById("btnTurn"),
+  btnAuto: document.getElementById("btnAuto"),
   btnPoll: document.getElementById("btnPoll"),
-  btnGOTV: document.getElementById("btnGOTV"),
-  btnScandal: document.getElementById("btnScandal")
+  btnEvent: document.getElementById("btnEvent")
 };
-
-const STATE = {
-  week: 0,
-  // Hidden "true" support shares (sum to 1)
-  true: { con:0.34, lab:0.41, ld:0.17, oth:0.08 },
-  // Your internal model estimate
-  model: { con:0.33, lab:0.42, ld:0.16, oth:0.09 },
-  // Confidence in model (0..1)
-  confidence: 0.38,
-  // Burnout (0..1)
-  burnout: 0.18,
-  // Identified universe (counts)
-  ids: { con: 120, lab: 110, ld: 50, oth: 20, unk: 4500 },
-  // GOTV readiness multiplier
-  gotvPrep: 0.10,
-  // last week ops
-  lastOps: null,
-  // pending poll (for lag)
-  pendingPollWeeks: 0,
-  pendingPoll: null
-};
-
-function softNormalize(p){
-  const s = p.con + p.lab + p.ld + p.oth;
-  p.con/=s; p.lab/=s; p.ld/=s; p.oth/=s;
-  return p;
-}
-
-function readConfig(){
-  const cfg = {
-    weeksToElection: clamp(parseInt(UI.weeksToElection.value||"18",10),1,52),
-    electorate: clamp(parseInt(UI.electorate.value||"4800",10),1500,12000),
-    turnoutBase: clamp(parseInt(UI.turnoutBase.value||"38",10),25,60)/100,
-    volatility: clamp(parseInt(UI.volatility.value||"62",10),0,100)/100,
-    salience: {
-      services: clamp(parseInt(UI.salienceServices.value||"75",10),0,100)/100,
-      housing: clamp(parseInt(UI.salienceHousing.value||"82",10),0,100)/100,
-      tax: clamp(parseInt(UI.salienceTax.value||"58",10),0,100)/100,
-      crime: clamp(parseInt(UI.salienceCrime.value||"41",10),0,100)/100
-    },
-    message: UI.message.value,
-    candidateStyle: UI.candidateStyle.value,
-    activistHours: clamp(parseInt(UI.activistHours.value||"95",10),0,220),
-    dataDiscipline: clamp(parseInt(UI.dataDiscipline.value||"68",10),0,100)/100
-  };
-  // keep IDs consistent with electorate
-  const known = STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth;
-  STATE.ids.unk = Math.max(0, cfg.electorate - known);
-
-  return cfg;
-}
-
-function candidateProfile(style){
-  // returns modifiers for persuasion, gaffe risk, data quality
-  switch(style){
-    case "disciplined":
-      return { persuasion: 0.8, gaffe: 0.35, dataQ: 0.85, doorstepVibe: 0.55 };
-    case "charismatic":
-      return { persuasion: 1.1, gaffe: 0.55, dataQ: 0.70, doorstepVibe: 0.75 };
-    case "localHero":
-      return { persuasion: 0.95, gaffe: 0.40, dataQ: 0.80, doorstepVibe: 0.68, trustBoost: 0.015 };
-    case "gaffeProne":
-      return { persuasion: 0.85, gaffe: 0.80, dataQ: 0.62, doorstepVibe: 0.50 };
-    default:
-      return { persuasion: 0.9, gaffe: 0.45, dataQ: 0.78, doorstepVibe: 0.60 };
-  }
-}
-
-function messageAlignment(cfg){
-  // Ward issue salience affects payoff to the chosen message.
-  // Returns a scalar (0.75..1.15) and a backlash risk
-  const s = cfg.salience;
-  let align = 1.0;
-  let backlash = 0.0;
-
-  if(cfg.message==="balanced"){
-    // balanced avoids backlash but caps upside
-    align = 1.02 - 0.07*Math.abs((s.housing+s.services)/2 - 0.75);
-    backlash = 0.05;
-  } else if(cfg.message==="services"){
-    align = 0.85 + 0.45*s.services;
-    backlash = 0.08 + 0.20*(1 - s.services);
-  } else if(cfg.message==="housing"){
-    align = 0.85 + 0.45*s.housing;
-    backlash = 0.08 + 0.20*(1 - s.housing);
-  } else if(cfg.message==="tax"){
-    align = 0.85 + 0.45*s.tax;
-    backlash = 0.08 + 0.20*(1 - s.tax);
-  } else if(cfg.message==="crime"){
-    align = 0.85 + 0.45*s.crime;
-    backlash = 0.08 + 0.20*(1 - s.crime);
-  }
-  return { align: clamp(align,0.75,1.15), backlash: clamp(backlash,0,0.35) };
-}
 
 function log(tag, msg){
   const div=document.createElement("div");
   div.className="logitem";
-  const when = `Week ${STATE.week}`;
   div.innerHTML = `
     <div class="t">
-      <div class="when">${when}</div>
+      <div class="when">Turn ${STATE.turn} / 20</div>
       <div class="tag">${tag}</div>
     </div>
     <div class="msg">${msg}</div>
@@ -480,70 +487,954 @@ function log(tag, msg){
   UI.log.prepend(div);
 }
 
-function pill(text, kind){
-  return `<span class="pill ${kind||""}">${text}</span>`;
+/* ========= Core Model =========
+   We simulate:
+   - Hidden "true" intention by segment (4 segments)
+   - Contact/canvass process that produces biased observed data
+   - Your model estimate updated by observed data and polls
+   - Postal vote banking
+   - GOTV readiness that affects election-day turnout differential
+   - Opponent actions and random events
+*/
+const STATE = {
+  locked: false,
+  turn: 0,
+  totalTurns: 20,
+
+  // locked config snapshot after turn 1
+  cfgLocked: null,
+
+  // finances
+  budgetRemaining: 0,
+
+  // hidden truth overall (derived from segments)
+  trueOverall: { con:0.34, lab:0.41, ld:0.17, oth:0.08 },
+
+  // your model (belief)
+  model: { con:0.33, lab:0.42, ld:0.16, oth:0.09 },
+  confidence: 0.36,
+  burnout: 0.18,
+
+  // GOTV and postal vote systems
+  gotvReadiness: 0.10, // 0..1
+  postalWindowOpen: false,
+  postalBanked: { con:0, lab:0, ld:0, oth:0 },
+
+  // poll system
+  pendingPoll: null,
+  pendingPollTurns: 0,
+
+  // segments (hidden intention distribution & voter file coverage)
+  segments: [], // filled on reset
+
+  // voter file IDs by party (how many people you have a recorded preference for)
+  ids: { con: 120, lab: 110, ld: 50, oth: 20, unk: 4500 },
+
+  lastOps: null,
+  gameOver: false
+};
+
+function candidateProfile(style){
+  switch(style){
+    case "disciplined": return { persuasion: 0.85, gaffe: 0.30, dataQ: 0.88, vibe: 0.55, localTrust: 0.00 };
+    case "charismatic": return { persuasion: 1.10, gaffe: 0.55, dataQ: 0.72, vibe: 0.75, localTrust: 0.00 };
+    case "localHero":   return { persuasion: 0.98, gaffe: 0.40, dataQ: 0.82, vibe: 0.68, localTrust: 0.015 };
+    case "gaffeProne":  return { persuasion: 0.88, gaffe: 0.80, dataQ: 0.62, vibe: 0.50, localTrust: 0.00 };
+    default:            return { persuasion: 0.90, gaffe: 0.45, dataQ: 0.78, vibe: 0.60, localTrust: 0.00 };
+  }
 }
 
-function winChanceFromModel(model, cfg){
-  // convert estimated lead into win chance, adjusted by volatility and confidence
-  const lead = model.con - Math.max(model.lab, model.ld); // lead over best rival
-  const base = 0.5 + (lead * 2.3); // steepness
-  const volPenalty = 0.22 * cfg.volatility;
-  const confBoost = 0.18 * (STATE.confidence - 0.5); // negative if low confidence
-  const wc = clamp(base - volPenalty + confBoost, 0.03, 0.97);
-  return wc;
+function messageAlignment(cfg){
+  const s = cfg.salience;
+  let align=1.0, backlash=0.0;
+  if(cfg.message==="balanced"){
+    align = 1.02 - 0.08*Math.abs((s.housing+s.services)/2 - 0.75);
+    backlash = 0.05;
+  } else if(cfg.message==="services"){
+    align = 0.85 + 0.50*s.services;
+    backlash = 0.08 + 0.22*(1 - s.services);
+  } else if(cfg.message==="housing"){
+    align = 0.85 + 0.50*s.housing;
+    backlash = 0.08 + 0.22*(1 - s.housing);
+  } else if(cfg.message==="tax"){
+    align = 0.85 + 0.50*s.tax;
+    backlash = 0.08 + 0.22*(1 - s.tax);
+  } else if(cfg.message==="crime"){
+    align = 0.85 + 0.50*s.crime;
+    backlash = 0.08 + 0.22*(1 - s.crime);
+  }
+  return { align: clamp(align,0.75,1.18), backlash: clamp(backlash,0,0.38) };
+}
+
+function scriptProfile(script){
+  // conversion: multiplies persuasion swing
+  // dataBias: increases canvass bias + miscodes
+  // backlash: increases chance of negative swing event
+  // fatigue: increases burnout
+  switch(script){
+    case "tight":    return { conversion: 0.85, dataBias: 0.75, backlash: 0.06, fatigue: 0.90 };
+    case "warm":     return { conversion: 1.05, dataBias: 1.05, backlash: 0.10, fatigue: 1.00 };
+    case "wedge":    return { conversion: 1.25, dataBias: 1.15, backlash: 0.22, fatigue: 1.05 };
+    case "negative": return { conversion: 1.15, dataBias: 1.25, backlash: 0.18, fatigue: 1.20 };
+    default:         return { conversion: 1.00, dataBias: 1.00, backlash: 0.10, fatigue: 1.00 };
+  }
+}
+
+function targetingProfile(mode){
+  // Which segments you tend to hit; also affects sampling bias
+  // returns weights per segment key and bias scalar
+  const w = { A:1, B:1, C:1, D:1 };
+  let bias = 0.20; // baseline canvass route bias
+  if(mode==="base"){       w.A=1.0; w.B=1.1; w.C=1.0; w.D=1.0; bias=0.18; }
+  if(mode==="persuade"){   w.A=0.7; w.B=1.3; w.C=1.4; w.D=0.6; bias=0.24; }
+  if(mode==="defend"){     w.A=1.4; w.B=1.1; w.C=0.7; w.D=0.6; bias=0.26; }
+  if(mode==="postal"){     w.A=1.2; w.B=1.2; w.C=1.0; w.D=0.6; bias=0.22; }
+  if(mode==="gotv"){       w.A=1.5; w.B=1.2; w.C=0.7; w.D=0.5; bias=0.30; }
+  return { weights:w, bias };
+}
+
+function winChanceFromModel(cfg){
+  const lead = STATE.model.con - Math.max(STATE.model.lab, STATE.model.ld);
+  const base = 0.5 + lead*2.4;
+  const volPenalty = 0.20*cfg.volatility;
+  const confAdj = 0.18*(STATE.confidence - 0.5);
+  const budgetAdj = clamp((STATE.budgetRemaining / Math.max(1, cfg.budgetBase)) - 0.25, -0.25, 0.20) * 0.10;
+  return clamp(base - volPenalty + confAdj + budgetAdj, 0.03, 0.97);
 }
 
 function estimateMoE(cfg){
-  // simple: confidence increases effective sample size; burnout and low discipline reduce it
-  const eff = 120 + 1300*STATE.confidence;
+  const eff = 120 + 1400*STATE.confidence;
   const p = STATE.model.con;
   const se = Math.sqrt((p*(1-p))/Math.max(80,eff));
   const moe = 1.96*se + 0.01*cfg.volatility + 0.015*STATE.burnout;
-  return clamp(moe, 0.015, 0.09);
+  return clamp(moe, 0.015, 0.10);
 }
 
+/* ========= Segments =========
+   A: Owner-occupiers/older (higher turnout, mildly Con)
+   B: Families/mixed (persuadable, turnout medium)
+   C: Private renters/young (LD/Lab lean, very persuadable, turnout lower)
+   D: Social housing/hard Lab (low persuadable, turnout medium)
+*/
+function makeSegments(cfg, cand){
+  const N = cfg.electorate;
+
+  // sizes sum to 1; depend on volatility & salience a bit (just to vary saves)
+  let a = clamp(0.28 + rnorm(0,0.03), 0.18, 0.40);
+  let b = clamp(0.30 + rnorm(0,0.03), 0.18, 0.40);
+  let c = clamp(0.22 + rnorm(0,0.03), 0.12, 0.35);
+  let d = clamp(1 - a - b - c, 0.10, 0.30);
+  // re-normalize
+  const s=a+b+c+d; a/=s; b/=s; c/=s; d/=s;
+
+  const segs = [
+    { key:"A", name:"Owner-occupiers / older", size: Math.round(N*a), baseTurnout: clamp(cfg.turnoutBase + 0.10, 0.20, 0.80),
+      persuadable: 0.28, contacted:0, ids:0,
+      true:{ con:0.42, lab:0.34, ld:0.16, oth:0.08 }
+    },
+    { key:"B", name:"Families / mixed", size: Math.round(N*b), baseTurnout: clamp(cfg.turnoutBase + 0.02, 0.20, 0.80),
+      persuadable: 0.46, contacted:0, ids:0,
+      true:{ con:0.35, lab:0.40, ld:0.17, oth:0.08 }
+    },
+    { key:"C", name:"Private renters / young", size: Math.round(N*c), baseTurnout: clamp(cfg.turnoutBase - 0.07, 0.15, 0.75),
+      persuadable: 0.55, contacted:0, ids:0,
+      true:{ con:0.22, lab:0.48, ld:0.22, oth:0.08 }
+    },
+    { key:"D", name:"Social housing / hard Lab", size: Math.round(N*d), baseTurnout: clamp(cfg.turnoutBase + 0.00, 0.20, 0.80),
+      persuadable: 0.18, contacted:0, ids:0,
+      true:{ con:0.16, lab:0.66, ld:0.10, oth:0.08 }
+    }
+  ];
+
+  // candidate local trust nudges true intention slightly
+  for(const seg of segs){
+    seg.true.con = clamp(seg.true.con + cand.localTrust, 0.05, 0.85);
+    seg.true.lab = clamp(seg.true.lab - cand.localTrust*0.70, 0.05, 0.90);
+    seg.true.ld  = clamp(seg.true.ld  - cand.localTrust*0.20, 0.02, 0.60);
+    seg.true.oth = clamp(seg.true.oth - cand.localTrust*0.10, 0.01, 0.40);
+    softNormalize(seg.true);
+  }
+
+  return segs;
+}
+
+function recomputeTrueOverall(){
+  let con=0,lab=0,ld=0,oth=0, total=0;
+  for(const seg of STATE.segments){
+    total += seg.size;
+    con += seg.size*seg.true.con;
+    lab += seg.size*seg.true.lab;
+    ld  += seg.size*seg.true.ld;
+    oth += seg.size*seg.true.oth;
+  }
+  STATE.trueOverall = softNormalize({ con: con/total, lab: lab/total, ld: ld/total, oth: oth/total });
+}
+
+/* ========= Config ========= */
+function readCfg(){
+  const cfg = {
+    wardName: UI.wardName.value || "Millbrook",
+    electorate: clamp(parseInt(UI.electorate.value||"4800",10),1500,12000),
+    turnoutBase: clamp(parseInt(UI.turnoutBase.value||"38",10),25,60)/100,
+    volatility: clamp(parseInt(UI.volatility.value||"62",10),0,100)/100,
+    oppStrength: clamp(parseInt(UI.oppStrength.value||"64",10),0,100)/100,
+    salience: {
+      services: clamp(parseInt(UI.salienceServices.value||"75",10),0,100)/100,
+      housing:  clamp(parseInt(UI.salienceHousing.value||"82",10),0,100)/100,
+      tax:      clamp(parseInt(UI.salienceTax.value||"58",10),0,100)/100,
+      crime:    clamp(parseInt(UI.salienceCrime.value||"41",10),0,100)/100
+    },
+    candidateStyle: UI.candidateStyle.value,
+    budgetBase: clamp(parseInt(UI.budget.value||"4500",10),500,25000),
+
+    // weekly plan
+    fieldHours: clamp(parseInt(UI.fieldHours.value||"95",10),0,220),
+    candHours:  clamp(parseInt(UI.candHours.value||"18",10),0,55),
+    targetMode: UI.targetMode.value,
+    script: UI.script.value,
+    message: UI.message.value,
+    dataDiscipline: clamp(parseInt(UI.dataDiscipline.value||"68",10),0,100)/100,
+    spend: clamp(parseInt(UI.spend.value||"180",10),0,5000)
+  };
+
+  // keep IDs unk coherent with electorate
+  const known = STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth;
+  STATE.ids.unk = Math.max(0, cfg.electorate - known);
+
+  return cfg;
+}
+
+/* ========= Locking ========= */
+function lockSetup(){
+  if(STATE.locked) return;
+  const cfg = readCfg();
+  STATE.cfgLocked = {
+    wardName: cfg.wardName,
+    electorate: cfg.electorate,
+    turnoutBase: cfg.turnoutBase,
+    volatility: cfg.volatility,
+    oppStrength: cfg.oppStrength,
+    salience: {...cfg.salience},
+    candidateStyle: cfg.candidateStyle,
+    budgetBase: cfg.budgetBase
+  };
+  STATE.locked = true;
+
+  // disable setup inputs
+  const lockEls = [
+    UI.wardName, UI.electorate, UI.turnoutBase, UI.volatility, UI.oppStrength,
+    UI.salienceServices, UI.salienceHousing, UI.salienceTax, UI.salienceCrime,
+    UI.candidateStyle, UI.budget
+  ];
+  lockEls.forEach(el=>el.disabled=true);
+  UI.setupCard.classList.add("locked");
+  log(pill("SETUP LOCKED","warn"), `Ward setup locked after Turn 1. You now manage tactics for the remaining ${STATE.totalTurns-STATE.turn} turns.`);
+}
+
+/* ========= Events & Opposition ========= */
+function applyBackgroundDrift(cfg){
+  // Small weekly drift (hidden) scaled by volatility and opponent pressure
+  const pressure = clamp(0.25 + 0.55*cfg.oppStrength + 0.35*cfg.volatility, 0.25, 1.0);
+  const driftScale = 0.003 + 0.012*cfg.volatility;
+  // drift affects segments differently; renters (C) move more
+  for(const seg of STATE.segments){
+    const segVol = (seg.key==="C") ? 1.35 : (seg.key==="B") ? 1.15 : (seg.key==="A") ? 0.85 : 0.95;
+    const macro = rnorm(0, driftScale*segVol);
+    // macro mostly shifts Con vs main rival (Lab)
+    seg.true.con = clamp(seg.true.con + macro, 0.05, 0.85);
+    seg.true.lab = clamp(seg.true.lab - macro*0.82 + rnorm(0, driftScale*0.25), 0.05, 0.90);
+    seg.true.ld  = clamp(seg.true.ld  - macro*0.12 + rnorm(0, driftScale*0.18), 0.02, 0.60);
+    seg.true.oth = clamp(seg.true.oth - macro*0.06 + rnorm(0, driftScale*0.14), 0.01, 0.40);
+    softNormalize(seg.true);
+  }
+  recomputeTrueOverall();
+
+  // Opponent action chance: higher opp strength + later turns
+  const late = (STATE.turn/STATE.totalTurns);
+  const attackChance = clamp(0.10 + 0.30*cfg.oppStrength + 0.18*late, 0.08, 0.65);
+  if(rnd() < attackChance){
+    // choose attack vector based on salience
+    const issues = [
+      {k:"services", w: cfg.salience.services},
+      {k:"housing",  w: cfg.salience.housing},
+      {k:"tax",      w: cfg.salience.tax},
+      {k:"crime",    w: cfg.salience.crime}
+    ];
+    const totalW = issues.reduce((a,x)=>a+x.w,0.001);
+    let r = rnd()*totalW;
+    let issue="services";
+    for(const it of issues){ r-=it.w; if(r<=0){ issue=it.k; break; } }
+
+    // Attack effect: small negative to Con, stronger if your message misaligned
+    const msg = messageAlignment(cfg);
+    const misalign = clamp(1.08 - msg.align, 0.70, 1.20);
+    const hit = -(0.004 + 0.012*rnd())*(0.6 + 0.8*cfg.volatility)*misalign*(0.8 + 0.7*cfg.oppStrength);
+    // concentrate on persuadables (B,C)
+    for(const seg of STATE.segments){
+      const factor = (seg.key==="B" || seg.key==="C") ? 1.10 : 0.75;
+      seg.true.con = clamp(seg.true.con + hit*factor, 0.05, 0.85);
+      seg.true.lab = clamp(seg.true.lab - hit*factor*0.85, 0.05, 0.90);
+      seg.true.ld  = clamp(seg.true.ld  - hit*factor*0.10, 0.02, 0.60);
+      seg.true.oth = clamp(seg.true.oth - hit*factor*0.05, 0.01, 0.40);
+      softNormalize(seg.true);
+    }
+    recomputeTrueOverall();
+    log(pill("OPPOSITION ATTACK","bad"), `Opposition hits you on <b>${issue}</b>. Hidden Con intention shifts by ${(Math.abs(hit)*100).toFixed(1)}pp (concentrated in persuadables).`);
+  }
+}
+
+function forceRandomEvent(cfg){
+  const cand = candidateProfile(cfg.candidateStyle);
+  const msg = messageAlignment(cfg);
+  const late = (STATE.turn/STATE.totalTurns);
+
+  const roll=rnd();
+  if(roll < 0.33){
+    // gaffe / comms slip
+    const gaffe = clamp(0.02 + 0.10*cand.gaffe + 0.10*STATE.burnout + 0.08*late, 0.02, 0.45);
+    const hit = -(0.006 + 0.016*rnd())*(0.7 + 0.8*cfg.volatility)*(0.8 + 0.6*gaffe);
+    for(const seg of STATE.segments){
+      const factor = (seg.key==="A") ? 0.8 : 1.1;
+      seg.true.con = clamp(seg.true.con + hit*factor, 0.05, 0.85);
+      seg.true.lab = clamp(seg.true.lab - hit*factor*0.80, 0.05, 0.90);
+      seg.true.ld  = clamp(seg.true.ld  - hit*factor*0.15, 0.02, 0.60);
+      seg.true.oth = clamp(seg.true.oth - hit*factor*0.05, 0.01, 0.40);
+      softNormalize(seg.true);
+    }
+    recomputeTrueOverall();
+    STATE.confidence = clamp(STATE.confidence - 0.03, 0.08, 0.95);
+    log(pill("GAFFE","bad"), `Candidate mishap gets traction. Hidden Con intention −${(Math.abs(hit)*100).toFixed(1)}pp. Confidence dips.`);
+  } else if(roll < 0.62){
+    // local win / endorsement
+    const boost = (0.005 + 0.014*rnd())*(0.7 + 0.7*msg.align)*(0.8 + 0.5*(1-STATE.burnout));
+    for(const seg of STATE.segments){
+      const factor = (seg.key==="A"||seg.key==="B") ? 1.1 : 0.8;
+      seg.true.con = clamp(seg.true.con + boost*factor, 0.05, 0.85);
+      seg.true.lab = clamp(seg.true.lab - boost*factor*0.80, 0.05, 0.90);
+      seg.true.ld  = clamp(seg.true.ld  - boost*factor*0.12, 0.02, 0.60);
+      seg.true.oth = clamp(seg.true.oth - boost*factor*0.08, 0.01, 0.40);
+      softNormalize(seg.true);
+    }
+    recomputeTrueOverall();
+    log(pill("LOCAL WIN","good"), `A local endorsement / win helps your credibility. Hidden Con intention +${(boost*100).toFixed(1)}pp (strongest in A/B).`);
+  } else {
+    // issue flare-up tied to salience, may punish wrong message
+    const keys=["services","housing","tax","crime"];
+    const pick=keys[Math.floor(rnd()*keys.length)];
+    const sal = cfg.salience[pick];
+    const dir = rnd()<0.55 ? -1 : 1; // usually negative
+    const mag = (0.006 + 0.018*sal)*(0.6 + 0.9*cfg.volatility);
+    const delta = dir*mag*(dir<0 ? (1.05 - 0.10*msg.align) : (0.85 + 0.15*msg.align));
+    for(const seg of STATE.segments){
+      const factor = (pick==="housing" && (seg.key==="A"||seg.key==="B")) ? 1.15 :
+                     (pick==="services" && (seg.key==="D"||seg.key==="B")) ? 1.10 :
+                     (pick==="tax" && seg.key==="A") ? 1.10 :
+                     (pick==="crime" && seg.key==="B") ? 1.05 : 0.95;
+      seg.true.con = clamp(seg.true.con + delta*factor, 0.05, 0.85);
+      seg.true.lab = clamp(seg.true.lab - delta*factor*0.82, 0.05, 0.90);
+      seg.true.ld  = clamp(seg.true.ld  - delta*factor*0.12, 0.02, 0.60);
+      seg.true.oth = clamp(seg.true.oth - delta*factor*0.06, 0.01, 0.40);
+      softNormalize(seg.true);
+    }
+    recomputeTrueOverall();
+    log(delta>0 ? pill("ISSUE WIND","good") : pill("ISSUE HEADWIND","bad"),
+      `Local <b>${pick}</b> flare-up ${delta>0 ? "favours" : "hurts"} you. Hidden Con intention ${delta>0?"+":"−"}${(Math.abs(delta)*100).toFixed(1)}pp.`);
+  }
+}
+
+/* ========= Core Turn Execution ========= */
+function runFieldOps(cfg){
+  const cand = candidateProfile(cfg.candidateStyle);
+  const scr = scriptProfile(cfg.script);
+  const tgt = targetingProfile(cfg.targetMode);
+  const msg = messageAlignment(cfg);
+
+  // effectiveness & capacity
+  const eff = clamp(1.0 - 0.55*STATE.burnout, 0.35, 1.0);
+
+  // data discipline reduces coverage, improves quality
+  const coverageFactor = clamp(0.60 + 0.70*(1 - cfg.dataDiscipline), 0.45, 1.25);
+
+  // spend increases reach a bit (print/digital helps contact rate + persuasion)
+  const spendBoost = clamp(cfg.spend / 600, 0, 1.2); // diminishing
+  const reachBoost = 1 + 0.12*spendBoost;
+
+  // doors
+  const baseDoors = cfg.fieldHours * (1.35 + 0.65*(1 - cfg.volatility));
+  const doors = Math.max(0, Math.round(baseDoors * eff * coverageFactor * reachBoost));
+
+  // contact rate depends on candidate hours (more visibility) but too high adds sloppiness
+  const candPressure = clamp(cfg.candHours / 55, 0, 1);
+  const candContactBonus = 0.04 + 0.10*cand.vibe * Math.sqrt(candPressure);
+  const sloppyPenalty = clamp((candPressure - 0.55), 0, 0.45)*0.10;
+
+  const contactRate = clamp(0.26 + 0.20*cand.vibe + candContactBonus - sloppyPenalty - 0.10*STATE.burnout, 0.16, 0.62);
+  const contacts = Math.round(doors * contactRate);
+
+  // allocate contacts to segments by targeting weights
+  const totalW = STATE.segments.reduce((a,seg)=>a + (tgt.weights[seg.key]||1), 0);
+  let segContacts = {};
+  for(const seg of STATE.segments){
+    segContacts[seg.key] = Math.round(contacts * ((tgt.weights[seg.key]||1)/totalW));
+  }
+
+  // canvass bias and miscoding
+  let routeBias = tgt.bias * scr.dataBias;
+  routeBias = clamp(routeBias + 0.20*(1 - cfg.dataDiscipline) + 0.15*STATE.burnout + (cand.dataQ<0.75?0.05:0), 0.08, 0.70);
+
+  // observed sample (what canvass "sees") is biased: your routes skew to friendlier voters
+  // bias direction varies slightly by week (you might accidentally hit hostile streets)
+  const biasDir = (rnd() < 0.60) ? 1 : -1;
+  const biasTowardCon = biasDir * routeBias * 0.09;
+
+  // generate observed party shares from segment truths with noise
+  let obsTotals = {con:0,lab:0,ld:0,oth:0, n:0};
+  for(const seg of STATE.segments){
+    const n = Math.max(0, segContacts[seg.key]||0);
+    if(n<=0) continue;
+
+    // noisy observation; discipline improves
+    const noise = 0.018 * (1 - cfg.dataDiscipline) * (0.75 + 0.8*cfg.volatility);
+    const seen = softNormalize({
+      con: clamp(seg.true.con + biasTowardCon + rnorm(0, noise), 0.02, 0.90),
+      lab: clamp(seg.true.lab - biasTowardCon*0.60 + rnorm(0, noise), 0.02, 0.92),
+      ld : clamp(seg.true.ld  - biasTowardCon*0.25 + rnorm(0, noise*0.8), 0.01, 0.70),
+      oth: clamp(seg.true.oth - biasTowardCon*0.15 + rnorm(0, noise*0.7), 0.01, 0.40)
+    });
+
+    // miscoding increases with low dataQ and low discipline
+    const miscode = clamp((1 - cand.dataQ) * 0.10 + (1 - cfg.dataDiscipline)*0.08, 0, 0.20);
+    // move a bit of con to unk/others in observation
+    const conLoss = seen.con * miscode;
+    seen.con = clamp(seen.con - conLoss, 0.01, 0.95);
+    seen.oth = clamp(seen.oth + conLoss*0.70, 0.01, 0.50);
+    seen.ld  = clamp(seen.ld  + conLoss*0.30, 0.01, 0.70);
+    softNormalize(seen);
+
+    obsTotals.con += n*seen.con;
+    obsTotals.lab += n*seen.lab;
+    obsTotals.ld  += n*seen.ld;
+    obsTotals.oth += n*seen.oth;
+    obsTotals.n += n;
+
+    // segment contacted/ids stats
+    seg.contacted += n;
+
+    // IDs from this segment depend on discipline and script (tight collects cleaner IDs)
+    const idYield = clamp(0.40 + 0.30*cfg.dataDiscipline + (cfg.script==="tight"?0.08:0) - (cfg.script==="negative"?0.05:0), 0.25, 0.78);
+    seg.ids += Math.round(n*idYield*0.35); // not all contacts produce a recorded ID
+  }
+
+  const observed = obsTotals.n>0 ? softNormalize({
+    con: obsTotals.con/obsTotals.n,
+    lab: obsTotals.lab/obsTotals.n,
+    ld : obsTotals.ld /obsTotals.n,
+    oth: obsTotals.oth/obsTotals.n
+  }) : {...STATE.model};
+
+  // update voter file IDs (party IDs based on observed composition)
+  const knownBefore = STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth;
+  const idCeiling = clamp(1 - (knownBefore/cfg.electorate), 0.08, 0.95);
+  const newIDs = Math.round((obsTotals.n||0) * (0.22 + 0.20*cfg.dataDiscipline) * idCeiling);
+
+  const addCon = Math.round(newIDs*observed.con);
+  const addLab = Math.round(newIDs*observed.lab);
+  const addLD  = Math.round(newIDs*observed.ld);
+  const addOth = Math.max(0, newIDs - addCon - addLab - addLD);
+
+  STATE.ids.con += addCon; STATE.ids.lab += addLab; STATE.ids.ld += addLD; STATE.ids.oth += addOth;
+  const knownAfter = STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth;
+  STATE.ids.unk = Math.max(0, cfg.electorate - knownAfter);
+
+  // persuasion swing (affects TRUE), depends on persuadables reached + message alignment + script conversion, with backlash chance
+  const persuadableHit = (() => {
+    let total=0, hit=0;
+    for(const seg of STATE.segments){
+      total += seg.size;
+      hit += segContacts[seg.key]*seg.persuadable;
+    }
+    return clamp(hit / Math.max(1, total), 0, 0.12); // share of electorate "persuadable contacted"
+  })();
+
+  // backlash
+  const backlashChance = clamp(msg.backlash + scr.backlash + 0.08*cfg.volatility + (cfg.script==="negative"?0.06:0), 0.03, 0.55);
+  const backlash = (rnd() < backlashChance) ? -1 : 1;
+
+  // persuasion magnitude
+  const diminishing = clamp(1 - (cfg.fieldHours/320), 0.35, 1.0);
+  let swing = backlash * (0.0008 + 0.0100*persuadableHit) * msg.align * cand.persuasion * scr.conversion * diminishing;
+  swing *= (0.92 + 0.18*cfg.dataDiscipline);
+  // spend slightly amplifies persuasion (print/digital saturation)
+  swing *= (1 + 0.06*spendBoost);
+
+  // apply swing to TRUE: mostly takes from best rival (Lab/LD) in persuadable segments
+  if(Math.abs(swing) > 0){
+    for(const seg of STATE.segments){
+      // only persuadables move; hard segments move less
+      const segMove = swing * (0.65 + 1.10*seg.persuadable) * (seg.key==="D" ? 0.55 : 1.0);
+      seg.true.con = clamp(seg.true.con + segMove, 0.05, 0.85);
+      const rival = (seg.true.lab >= seg.true.ld) ? "lab" : "ld";
+      seg.true[rival] = clamp(seg.true[rival] - segMove*0.85, 0.05, 0.90);
+      seg.true.oth = clamp(seg.true.oth - segMove*0.15, 0.01, 0.40);
+      softNormalize(seg.true);
+    }
+    recomputeTrueOverall();
+  }
+
+  // model learning: move model toward observed sample, scaled by data quality & confidence
+  const dq = clamp((0.55 + 0.35*cfg.dataDiscipline) * cand.dataQ * (1 - 0.25*STATE.burnout), 0.35, 0.92);
+  const learnRate = clamp(0.05 + 0.12*dq, 0.05, 0.20);
+
+  STATE.model.con = clamp(STATE.model.con + learnRate*(observed.con - STATE.model.con), 0.02, 0.90);
+  STATE.model.lab = clamp(STATE.model.lab + learnRate*(observed.lab - STATE.model.lab), 0.02, 0.92);
+  STATE.model.ld  = clamp(STATE.model.ld  + learnRate*(observed.ld  - STATE.model.ld ), 0.01, 0.70);
+  STATE.model.oth = clamp(STATE.model.oth + learnRate*(observed.oth - STATE.model.oth), 0.01, 0.50);
+  softNormalize(STATE.model);
+
+  // confidence update
+  const idFrac = clamp(knownAfter / cfg.electorate, 0, 1);
+  const confGain = 0.04*(0.35 + 0.65*cfg.dataDiscipline) * (0.30 + 0.70*idFrac) * (1 - routeBias);
+  const confLoss = 0.014*STATE.burnout + 0.02*Math.max(0, routeBias-0.20);
+  STATE.confidence = clamp(STATE.confidence + confGain - confLoss, 0.08, 0.95);
+
+  // burnout update (hours + script fatigue + discipline friction)
+  const pressure = 0.10 + 0.40*(STATE.turn/STATE.totalTurns);
+  const burnUp = (cfg.fieldHours/220) * (0.03 + 0.05*pressure) * scr.fatigue + 0.01*cfg.dataDiscipline;
+  const burnDown = 0.012 + 0.01*(cfg.fieldHours<60 ? 1 : 0);
+  STATE.burnout = clamp(STATE.burnout + burnUp - burnDown, 0, 0.95);
+
+  // GOTV readiness grows with defend/gotv modes and IDs
+  const gotvModeBoost = (cfg.targetMode==="gotv") ? 0.06 : (cfg.targetMode==="defend") ? 0.035 : (cfg.targetMode==="postal") ? 0.03 : 0.02;
+  STATE.gotvReadiness = clamp(STATE.gotvReadiness + gotvModeBoost*(0.55 + 0.45*cfg.dataDiscipline) * (0.65 + 0.35*idFrac), 0, 0.90);
+
+  // gaffe check tied to candidate hours
+  const gaffeChance = clamp(0.01 + 0.10*cand.gaffe*(cfg.candHours/55) + 0.06*STATE.burnout, 0.01, 0.40);
+  let gaffeHit = 0;
+  if(rnd() < gaffeChance){
+    gaffeHit = -(0.004 + 0.016*rnd())*(0.7 + 0.8*cfg.volatility);
+    for(const seg of STATE.segments){
+      const factor = (seg.key==="A") ? 0.85 : 1.10;
+      seg.true.con = clamp(seg.true.con + gaffeHit*factor, 0.05, 0.85);
+      seg.true.lab = clamp(seg.true.lab - gaffeHit*factor*0.80, 0.05, 0.90);
+      seg.true.ld  = clamp(seg.true.ld  - gaffeHit*factor*0.15, 0.02, 0.60);
+      seg.true.oth = clamp(seg.true.oth - gaffeHit*factor*0.05, 0.01, 0.40);
+      softNormalize(seg.true);
+    }
+    recomputeTrueOverall();
+    STATE.confidence = clamp(STATE.confidence - 0.03, 0.08, 0.95);
+  }
+
+  return {
+    doors, contacts: obsTotals.n||0, newIDs, routeBias, dq,
+    observed, swing, backlashChance, gaffeChance, gaffeHit,
+    segContacts
+  };
+}
+
+function postalChase(cfg, ops){
+  // Postal window opens mid-campaign; earlier turns: prep only.
+  // When open, you can bank votes among identified supporters.
+  const t = STATE.turn;
+  const open = (t >= 9 && t <= 17); // mid-campaign window
+  STATE.postalWindowOpen = open;
+
+  if(!open) return { open:false, banked:0, note:"Postal window not open (prep only)." };
+
+  if(cfg.targetMode !== "postal") return { open:true, banked:0, note:"Postal window open, but targeting not set to Postal." };
+
+  // Bank votes based on Con IDs, field hours, data discipline, and burnout
+  const idCon = STATE.ids.con;
+  const idFrac = clamp(idCon / cfg.electorate, 0, 0.40);
+
+  const capacity = clamp(cfg.fieldHours/220, 0, 1);
+  const quality = clamp(0.55 + 0.45*cfg.dataDiscipline, 0.55, 0.95) * (1 - 0.35*STATE.burnout);
+  const bankRate = clamp(0.010 + 0.060*capacity*quality*(0.6 + 0.8*STATE.gotvReadiness) * (0.6 + 1.2*idFrac), 0.005, 0.12);
+
+  // banked this turn (as a share of electorate) among Con supporters
+  const banked = Math.round(cfg.electorate * bankRate);
+  // cannot exceed con IDs pool in reality; clamp to a fraction
+  const maxBankable = Math.round(idCon * 0.55);
+  const actual = Math.min(banked, Math.max(0, maxBankable - STATE.postalBanked.con));
+
+  STATE.postalBanked.con += actual;
+
+  // assume opponents also bank some (not visible), but tracked for election day in hidden calc
+  const oppBank = Math.round(actual * (0.65 + 0.50*cfg.oppStrength));
+  STATE.postalBanked.lab += Math.round(oppBank*0.75);
+  STATE.postalBanked.ld  += Math.round(oppBank*0.20);
+  STATE.postalBanked.oth += Math.round(oppBank*0.05);
+
+  return { open:true, banked:actual, note:`Postal chase banks votes: ${fmtInt(actual)} Con postal votes locked in.` };
+}
+
+function spendBudget(cfg){
+  // You choose total spend; if you overspend, penalties apply.
+  let spend = cfg.spend;
+  if(spend > STATE.budgetRemaining){
+    // overspend triggers debt penalty (reputation, volunteer morale)
+    const overshoot = spend - STATE.budgetRemaining;
+    spend = STATE.budgetRemaining;
+    STATE.budgetRemaining = 0;
+    STATE.confidence = clamp(STATE.confidence - 0.02, 0.08, 0.95);
+    STATE.burnout = clamp(STATE.burnout + 0.03, 0, 0.95);
+    log(pill("BUDGET CRUNCH","bad"), `You attempted to spend beyond remaining budget (overshoot ${fmtGBP(overshoot)}). You hit the ceiling: confidence −2pp, burnout +3pp.`);
+    return { spend, overshoot };
+  }
+  STATE.budgetRemaining -= spend;
+  return { spend, overshoot:0 };
+}
+
+function processPendingPoll(cfg){
+  if(STATE.pendingPollTurns > 0){
+    STATE.pendingPollTurns -= 1;
+    if(STATE.pendingPollTurns === 0 && STATE.pendingPoll){
+      const p = STATE.pendingPoll;
+      const w = clamp(0.40 + 0.30*STATE.confidence, 0.40, 0.75);
+      STATE.model.con = clamp(STATE.model.con + w*(p.con - STATE.model.con), 0.02, 0.90);
+      STATE.model.lab = clamp(STATE.model.lab + w*(p.lab - STATE.model.lab), 0.02, 0.92);
+      STATE.model.ld  = clamp(STATE.model.ld  + w*(p.ld  - STATE.model.ld ), 0.01, 0.70);
+      STATE.model.oth = clamp(STATE.model.oth + w*(p.oth - STATE.model.oth), 0.01, 0.50);
+      softNormalize(STATE.model);
+
+      STATE.confidence = clamp(STATE.confidence + 0.12, 0.08, 0.95);
+
+      if(p.leak){
+        // small backlash to true intention
+        const hit = -(0.003 + 0.010*rnd());
+        for(const seg of STATE.segments){
+          const factor = (seg.key==="B"||seg.key==="C") ? 1.10 : 0.85;
+          seg.true.con = clamp(seg.true.con + hit*factor, 0.05, 0.85);
+          seg.true.lab = clamp(seg.true.lab - hit*factor*0.80, 0.05, 0.90);
+          seg.true.ld  = clamp(seg.true.ld  - hit*factor*0.15, 0.02, 0.60);
+          seg.true.oth = clamp(seg.true.oth - hit*factor*0.05, 0.01, 0.40);
+          softNormalize(seg.true);
+        }
+        recomputeTrueOverall();
+        log(pill("POLL LEAK","bad"), `Poll leaks and gets spun. Hidden Con intention −${(Math.abs(hit)*100).toFixed(1)}pp.`);
+      }
+
+      log(pill("POLL RESULT","warn"),
+        `Ward poll returns: Con <b>${fmtPct(p.con)}</b>, Lab ${fmtPct(p.lab)}, LD ${fmtPct(p.ld)}, Oth ${fmtPct(p.oth)}. Model anchored; confidence up.`);
+      STATE.pendingPoll = null;
+    }
+  }
+}
+
+function commissionPoll(){
+  if(STATE.gameOver) return;
+  const cfg = getEffectiveCfg();
+  const cost = 650;
+  if(STATE.budgetRemaining < cost){
+    log(pill("POLL FAILED","bad"), `Insufficient budget for a ward poll (${fmtGBP(cost)}).`);
+    return;
+  }
+  STATE.budgetRemaining -= cost;
+
+  const baseMoE = 0.028 + 0.035*cfg.volatility + (STATE.turn>12?0.008:0);
+  const house = rnorm(0, 0.008);
+  const t = STATE.trueOverall;
+
+  const poll = softNormalize({
+    con: clamp(t.con + rnorm(0, baseMoE/1.96) + house, 0.02, 0.90),
+    lab: clamp(t.lab + rnorm(0, baseMoE/1.96) - house*0.60, 0.02, 0.92),
+    ld : clamp(t.ld  + rnorm(0, baseMoE/2.3),  0.01, 0.70),
+    oth: clamp(t.oth + rnorm(0, baseMoE/2.6),  0.01, 0.50)
+  });
+
+  const behind = (STATE.model.con < Math.max(STATE.model.lab,STATE.model.ld)) ? 1 : 0;
+  const leakChance = clamp(0.06 + 0.12*(STATE.turn/STATE.totalTurns) + 0.06*behind, 0.03, 0.28);
+  poll.leak = rnd() < leakChance;
+
+  STATE.pendingPollTurns = (rnd()<0.55) ? 2 : 3;
+  STATE.pendingPoll = poll;
+
+  log(pill("POLL ORDERED","warn"), `Ward poll commissioned for ${fmtGBP(cost)}. ETA: <b>${STATE.pendingPollTurns}</b> turns. Leak risk ${(leakChance*100).toFixed(0)}%.`);
+}
+
+/* ========= Election Day ========= */
+function runElectionDay(cfg){
+  // turnout depends on base, weather, GOTV readiness, opposition strength, and burnout
+  const weather = rnorm(0, 0.05); // negative = bad weather
+  const baseTurnout = clamp(cfg.turnoutBase + weather, 0.20, 0.78);
+
+  // differential turnout boosts: your GOTV helps Con supporters turn out more; opponent also has GOTV
+  const idFracCon = clamp(STATE.ids.con / cfg.electorate, 0, 0.40);
+  const yourGOTV = clamp(0.010 + 0.050*STATE.gotvReadiness*(0.7 + 0.9*idFracCon)*(1 - 0.45*STATE.burnout), 0.005, 0.09);
+  const oppGOTV  = clamp(0.010 + 0.055*cfg.oppStrength*(0.7 + 0.6*(1 - idFracCon)), 0.006, 0.10);
+
+  // compute votes by segment
+  let votes = { con:0, lab:0, ld:0, oth:0 };
+  let turnoutActual = 0;
+
+  for(const seg of STATE.segments){
+    // segment turnout shaped by base + GOTV (applied as differential by party)
+    const segTurn = clamp(seg.baseTurnout + weather*0.6, 0.15, 0.85);
+    const segVoters = Math.round(seg.size * segTurn);
+    turnoutActual += segVoters;
+
+    // apply differential turnout by shifting effective composition
+    // Con share among those who actually vote increases with your GOTV; Lab/LD with opp GOTV
+    const t = {...seg.true};
+
+    // adjust shares slightly (turnout differential), keeping sum ~1
+    t.con = clamp(t.con + yourGOTV*(seg.key==="A"||seg.key==="B"?1.2:0.9), 0.02, 0.92);
+    t.lab = clamp(t.lab + oppGOTV*(seg.key==="D"||seg.key==="C"?1.2:1.0), 0.02, 0.92);
+    t.ld  = clamp(t.ld  + oppGOTV*(seg.key==="C"?0.35:0.20), 0.01, 0.70);
+    // keep oth stable-ish, then normalize
+    softNormalize(t);
+
+    votes.con += Math.round(segVoters * t.con);
+    votes.lab += Math.round(segVoters * t.lab);
+    votes.ld  += Math.round(segVoters * t.ld);
+    votes.oth += Math.max(0, segVoters - Math.round(segVoters*t.con) - Math.round(segVoters*t.lab) - Math.round(segVoters*t.ld));
+  }
+
+  // add banked postal votes (already included in turnout conceptually, but we treat as additive “banked” to make PV matter)
+  // To avoid double-counting, subtract roughly equivalent from live vote pool proportionally.
+  const pvTotal = STATE.postalBanked.con+STATE.postalBanked.lab+STATE.postalBanked.ld+STATE.postalBanked.oth;
+  if(pvTotal>0){
+    // reduce live votes
+    const liveTotal = votes.con+votes.lab+votes.ld+votes.oth;
+    const scale = clamp((liveTotal - pvTotal)/Math.max(1, liveTotal), 0.65, 0.98);
+    votes.con = Math.round(votes.con*scale) + STATE.postalBanked.con;
+    votes.lab = Math.round(votes.lab*scale) + STATE.postalBanked.lab;
+    votes.ld  = Math.round(votes.ld *scale) + STATE.postalBanked.ld;
+    votes.oth = Math.max(0, Math.round(votes.oth*scale) + STATE.postalBanked.oth);
+  }
+
+  // determine winner
+  const winner = Object.entries(votes).sort((a,b)=>b[1]-a[1])[0][0];
+  const second = Object.entries(votes).sort((a,b)=>b[1]-a[1])[1];
+  const margin = votes[winner] - second[1];
+  const turnoutPct = turnoutActual / cfg.electorate;
+
+  const partyName = (k)=>k==="con"?"Conservative":k==="lab"?"Labour":k==="ld"?"Lib Dem":"Other";
+
+  log(pill("ELECTION DAY","warn"),
+    `<b>Turnout:</b> ${(turnoutPct*100).toFixed(1)}% (weather factor ${(weather*100).toFixed(0)}pp).
+     <br><b>Result:</b> ${partyName(winner)} wins ${cfg.wardName} by <b>${fmtInt(margin)}</b> votes.
+     <br><span class="muted">Votes — Con ${fmtInt(votes.con)}, Lab ${fmtInt(votes.lab)}, LD ${fmtInt(votes.ld)}, Oth ${fmtInt(votes.oth)}.</span>`
+  );
+
+  STATE.gameOver = true;
+  UI.btnTurn.disabled = true;
+  UI.btnAuto.disabled = true;
+  UI.btnPoll.disabled = true;
+  UI.btnEvent.disabled = true;
+}
+
+/* ========= Turn Runner ========= */
+function getEffectiveCfg(){
+  // If locked, use locked setup + current weekly plan.
+  const cfg = readCfg();
+  if(!STATE.locked) return cfg;
+  return {
+    ...cfg,
+    wardName: STATE.cfgLocked.wardName,
+    electorate: STATE.cfgLocked.electorate,
+    turnoutBase: STATE.cfgLocked.turnoutBase,
+    volatility: STATE.cfgLocked.volatility,
+    oppStrength: STATE.cfgLocked.oppStrength,
+    salience: {...STATE.cfgLocked.salience},
+    candidateStyle: STATE.cfgLocked.candidateStyle,
+    budgetBase: STATE.cfgLocked.budgetBase
+  };
+}
+
+function runTurn(){
+  if(STATE.gameOver) return;
+
+  const cfg = getEffectiveCfg();
+
+  // increment turn
+  STATE.turn += 1;
+
+  // lock setup after turn 1 completes (per your requirement)
+  // (we lock AFTER running the first turn’s mechanics so your initial plan week matters)
+  // spend
+  const spendRes = spendBudget(cfg);
+
+  // background drift + opposition actions
+  applyBackgroundDrift(cfg);
+
+  // pending poll tick
+  processPendingPoll(cfg);
+
+  // execute field ops
+  const ops = runFieldOps(cfg);
+  STATE.lastOps = ops;
+
+  // postal chase
+  const pv = postalChase(cfg, ops);
+
+  // scripted backlash log
+  const swingPP = ops.swing*100;
+  const swingNote = (ops.swing>0) ? "Persuasion gain" : (ops.swing<0) ? "Backlash / negative movement" : "No net movement";
+
+  // gaffe log if happened
+  if(ops.gaffeHit < 0){
+    log(pill("GAFFE","bad"), `High visibility week triggers a candidate stumble. Hidden Con intention −${(Math.abs(ops.gaffeHit)*100).toFixed(1)}pp.`);
+  }
+
+  // summarise the turn
+  log(pill("TURN","warn"),
+    `<b>${cfg.wardName} — Turn ${STATE.turn}</b><br>
+     Field: ${fmtInt(ops.doors)} doors, ${fmtInt(ops.contacts)} contacts; new IDs <b>${fmtInt(ops.newIDs)}</b>.
+     Data quality ${(ops.dq*100).toFixed(0)}% (route bias ${(ops.routeBias*100).toFixed(0)}%).<br>
+     Persuasion: <b>${swingNote}</b> (${swingPP.toFixed(2)}pp hidden impact). Script backlash risk ${(ops.backlashChance*100).toFixed(0)}%.
+     ${pv.open ? `<br>Postal: ${pv.banked>0 ? `<b>${fmtInt(pv.banked)}</b> Con PVs banked.` : pv.note}` : `<br>Postal: ${pv.note}`}`
+  );
+
+  // lock setup now if this was turn 1
+  if(STATE.turn === 1) lockSetup();
+
+  // end of game
+  if(STATE.turn >= STATE.totalTurns){
+    runElectionDay(cfg);
+  }
+
+  updateUI();
+}
+
+/* ========= Reset / Regen ========= */
+function resetGame(){
+  STATE.locked = false;
+  STATE.turn = 0;
+  STATE.gameOver = false;
+  STATE.pendingPoll = null;
+  STATE.pendingPollTurns = 0;
+
+  // re-enable setup inputs
+  const lockEls = [
+    UI.wardName, UI.electorate, UI.turnoutBase, UI.volatility, UI.oppStrength,
+    UI.salienceServices, UI.salienceHousing, UI.salienceTax, UI.salienceCrime,
+    UI.candidateStyle, UI.budget
+  ];
+  lockEls.forEach(el=>el.disabled=false);
+  UI.setupCard.classList.remove("locked");
+
+  const cfg = readCfg();
+  STATE.budgetRemaining = cfg.budgetBase;
+
+  // initial voter file
+  STATE.ids = { con: 120, lab: 110, ld: 50, oth: 20, unk: Math.max(0, cfg.electorate - 300) };
+
+  // burnout/confidence resets
+  STATE.confidence = 0.36;
+  STATE.burnout = 0.18;
+  STATE.gotvReadiness = 0.10;
+
+  // postal banks reset
+  STATE.postalWindowOpen = false;
+  STATE.postalBanked = { con:0, lab:0, ld:0, oth:0 };
+
+  // regenerate segments and hidden truth
+  const cand = candidateProfile(cfg.candidateStyle);
+  STATE.segments = makeSegments(cfg, cand);
+  recomputeTrueOverall();
+
+  // start model with a plausible error
+  STATE.model = softNormalize({
+    con: clamp(STATE.trueOverall.con + rnorm(0,0.020), 0.05, 0.85),
+    lab: clamp(STATE.trueOverall.lab + rnorm(0,0.020), 0.05, 0.90),
+    ld : clamp(STATE.trueOverall.ld  + rnorm(0,0.015), 0.01, 0.70),
+    oth: clamp(STATE.trueOverall.oth + rnorm(0,0.010), 0.01, 0.50)
+  });
+
+  STATE.lastOps = null;
+  UI.log.innerHTML = "";
+
+  UI.btnTurn.disabled = false;
+  UI.btnAuto.disabled = false;
+  UI.btnPoll.disabled = false;
+  UI.btnEvent.disabled = false;
+
+  log(pill("REGENERATED","warn"),
+    `Ward regenerated. Hidden baseline is set by segments (A/B/C/D). You will never see “true” numbers — only your model and noisy signals.`);
+  updateUI();
+}
+
+/* ========= UI Update ========= */
 function updateUI(){
-  const cfg = readConfig();
+  const cfg = getEffectiveCfg();
+
   UI.turnoutBaseVal.textContent = (cfg.turnoutBase*100).toFixed(0) + "%";
   UI.volatilityVal.textContent = (cfg.volatility*100).toFixed(0) + "/100";
+  UI.oppStrengthVal.textContent = (cfg.oppStrength*100).toFixed(0) + "/100";
   UI.salienceServicesVal.textContent = (cfg.salience.services*100).toFixed(0) + "/100";
   UI.salienceHousingVal.textContent = (cfg.salience.housing*100).toFixed(0) + "/100";
   UI.salienceTaxVal.textContent = (cfg.salience.tax*100).toFixed(0) + "/100";
   UI.salienceCrimeVal.textContent = (cfg.salience.crime*100).toFixed(0) + "/100";
-  UI.activistHoursVal.textContent = cfg.activistHours + " hrs";
+
+  UI.fieldHoursVal.textContent = cfg.fieldHours + " hrs";
+  UI.candHoursVal.textContent = cfg.candHours + " hrs";
   UI.dataDisciplineVal.textContent = (cfg.dataDiscipline*100).toFixed(0) + "/100";
 
+  // KPIs
+  UI.kpiTurn.textContent = `${STATE.turn}`;
+  UI.kpiBudget.textContent = fmtGBP(STATE.budgetRemaining);
+  UI.kpiBudgetHint.textContent = `Base: ${fmtGBP(cfg.budgetBase)} • Spend/turn: ${fmtGBP(cfg.spend)}`;
+
   const moe = estimateMoE(cfg);
-  const win = winChanceFromModel(STATE.model, cfg);
+  const win = winChanceFromModel(cfg);
 
   UI.kpiModel.textContent = fmtPct(STATE.model.con);
-  UI.kpiModelHint.textContent = `MoE approx ±${(moe*100).toFixed(1)}pp (internal)`;
+  UI.kpiModelHint.textContent = `MoE approx ±${(moe*100).toFixed(1)}pp`;
 
   UI.kpiWin.textContent = (win*100).toFixed(0) + "%";
   UI.kpiWinHint.textContent = `Lead vs best rival: ${((STATE.model.con - Math.max(STATE.model.lab,STATE.model.ld))*100).toFixed(1)}pp`;
 
   UI.kpiConf.textContent = (STATE.confidence*100).toFixed(0) + "%";
-  UI.kpiConfHint.textContent = `IDs: ${fmtInt(STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth)} / ${fmtInt(cfg.electorate)}`;
+  const known = STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth;
+  UI.kpiConfHint.textContent = `IDs: ${fmtInt(known)} / ${fmtInt(cfg.electorate)} (unk ${fmtInt(STATE.ids.unk)})`;
 
   UI.kpiBurn.textContent = (STATE.burnout*100).toFixed(0) + "%";
-  UI.kpiBurnHint.textContent = STATE.burnout>0.65 ? "Effectiveness collapsing" : "Manageable";
+  UI.kpiBurnHint.textContent = STATE.burnout>0.70 ? "Field efficiency collapsing" : "Manageable";
 
-  // bars
+  UI.kpiPV.textContent = fmtInt(STATE.postalBanked.con);
+  UI.kpiPVHint.textContent = STATE.postalWindowOpen ? "Postal window open" : "Postal window closed";
+
+  UI.kpiGOTV.textContent = (STATE.gotvReadiness*100).toFixed(0) + "%";
+  UI.kpiGOTVHint.textContent = "Improves differential turnout late-game";
+
+  // Bars
   UI.barCon.style.width = (STATE.model.con*100).toFixed(1)+"%";
   UI.barLab.style.width = (STATE.model.lab*100).toFixed(1)+"%";
   UI.barLD.style.width  = (STATE.model.ld*100).toFixed(1)+"%";
   UI.barOth.style.width = (STATE.model.oth*100).toFixed(1)+"%";
 
-  // ops table
+  // Segment table
+  UI.segTable.innerHTML = "";
+  for(const seg of STATE.segments){
+    // show model-based lean estimate: we approximate by adjusting segment truth with model error (player doesn't see truth)
+    // Here we display a "Con Lean" as a function of current overall model + initial segment priors.
+    // (In a full game you'd have segment-level model; this keeps UI simple.)
+    const estLean = clamp(seg.true.con + (STATE.model.con - STATE.trueOverall.con)*0.65 + rnorm(0,0.01), 0.02, 0.85); // slight noise
+    const contactedPct = clamp(seg.contacted / Math.max(1, seg.size), 0, 1);
+    const tr=document.createElement("tr");
+    tr.innerHTML = `
+      <td>${seg.name}</td>
+      <td class="mono">${fmtInt(seg.size)}</td>
+      <td class="mono">${fmtPct(estLean)}</td>
+      <td class="mono">${(contactedPct*100).toFixed(1)}%</td>
+    `;
+    UI.segTable.appendChild(tr);
+  }
+
+  // Ops table
   const ops = STATE.lastOps;
   UI.opsTable.innerHTML = "";
+  const msg = messageAlignment(cfg);
+  const scr = scriptProfile(cfg.script);
   const rows = [
-    ["Doors knocked", ops?fmtInt(ops.doors):"—", ops? (ops.qualityTag) : "—"],
+    ["Doors knocked", ops?fmtInt(ops.doors):"—", ops? (ops.dq>0.70 ? "Clean returns" : ops.dq>0.58 ? "Mixed quality" : "Noisy data") : "—"],
     ["Contacts made", ops?fmtInt(ops.contacts):"—", ops? `Contact rate ${(ops.contacts/Math.max(1,ops.doors)*100).toFixed(0)}%` : "—"],
-    ["New IDs", ops?fmtInt(ops.newIDs):"—", ops? `Bias risk ${(ops.bias*100).toFixed(0)}%` : "—"],
-    ["Persuasion swing", ops? ((ops.swing*100).toFixed(2)+"pp") : "—", ops? ops.swingNote : "—"],
-    ["GOTV prep", ops? ((STATE.gotvPrep*100).toFixed(0)+"%") : ((STATE.gotvPrep*100).toFixed(0)+"%"), "Increases turnout among identified Con supporters"]
+    ["New voter IDs", ops?fmtInt(ops.newIDs):"—", `Con IDs: ${fmtInt(STATE.ids.con)} (unk ${fmtInt(STATE.ids.unk)})`],
+    ["Message alignment", `${(msg.align*100).toFixed(0)}%`, `Backlash ${(msg.backlash*100).toFixed(0)}% • Script adds ${(scr.backlash*100).toFixed(0)}%`],
+    ["Persuasion (hidden)", ops?`${(ops.swing*100).toFixed(2)}pp`:"—", ops? (ops.swing>0 ? "Gaining" : ops.swing<0 ? "Losing (backlash)" : "Flat") : "—"],
+    ["Route bias", ops?`${(ops.routeBias*100).toFixed(0)}%`:"—", "Higher = your sample lies more"],
+    ["Gaffe chance", ops?`${(ops.gaffeChance*100).toFixed(0)}%`:"—", "Rises with candidate hours + burnout"],
+    ["Postal window", STATE.postalWindowOpen ? "Open" : "Closed", STATE.postalWindowOpen ? "Target mode ‘Postal’ to bank votes" : "Opens mid-campaign (turns 9–17)"]
   ];
   for(const [m,v,n] of rows){
     const tr=document.createElement("tr");
@@ -551,406 +1442,35 @@ function updateUI(){
     UI.opsTable.appendChild(tr);
   }
 
-  // targeting recommendation
-  const lead = STATE.model.con - Math.max(STATE.model.lab, STATE.model.ld);
-  let rec = "";
-  if(lead > 0.08 && win > 0.75){
-    rec += `${pill("Lean Hold / Safe-ish", "good")} You can reduce weekly hours slightly and redeploy, but keep data ticking over to prevent surprise drift.`;
-  } else if(lead > 0.03){
-    rec += `${pill("Marginal Hold", "warn")} Maintain pressure. Focus on disciplined message and ID expansion. Consider a poll if confidence is low.`;
-  } else if(lead > -0.02){
-    rec += `${pill("Toss-Up", "warn")} Treat as must-win: prioritise persuasion routes + tighten data discipline. GOTV prep matters from ~6 weeks out.`;
-  } else if(lead > -0.06){
-    rec += `${pill("Marginal Gain", "warn")} You need either (a) high-intensity field + perfect message fit or (b) opponent error. Poll to verify viability.`;
-  } else {
-    rec += `${pill("Stretch / No-Hope", "bad")} Only justify spend if council path demands it or you can trigger a local wedge. Data-led triage recommended.`;
-  }
-  rec += `<div class="divider"></div>
-    <div class="small muted">
-      Suggested next action: <b>${
-        (STATE.confidence<0.45 && cfg.weeksToElection>6) ? "Run more canvass for model confidence." :
-        (STATE.confidence<0.55 && cfg.weeksToElection<=10) ? "Commission a poll to correct model drift." :
-        (cfg.weeksToElection<=6) ? "Shift hours into GOTV + chase postal voters." :
-        "Tune message to ward salience and expand IDs."
-      }</b>
-    </div>`;
-  UI.targeting.innerHTML = rec;
-}
-
-function resetWard(){
-  const cfg = readConfig();
-  STATE.week = 0;
-  // Hidden "true" baseline for a marginal-ish ward (slightly behind)
-  STATE.true = softNormalize({
-    con: clamp(0.33 + rnorm(0,0.02), 0.25, 0.42),
-    lab: clamp(0.43 + rnorm(0,0.02), 0.30, 0.55),
-    ld : clamp(0.16 + rnorm(0,0.015),0.08, 0.28),
-    oth: clamp(0.08 + rnorm(0,0.01), 0.03, 0.12)
-  });
-  // Model starts a bit wrong
-  STATE.model = softNormalize({
-    con: clamp(STATE.true.con + rnorm(0,0.02), 0.20, 0.55),
-    lab: clamp(STATE.true.lab + rnorm(0,0.02), 0.20, 0.65),
-    ld : clamp(STATE.true.ld  + rnorm(0,0.015),0.05, 0.35),
-    oth: clamp(STATE.true.oth + rnorm(0,0.01), 0.02, 0.15)
-  });
-
-  STATE.confidence = 0.35;
-  STATE.burnout = 0.18;
-  STATE.gotvPrep = 0.10;
-
-  // IDs: start with a thin base
-  const known = Math.round(cfg.electorate * 0.06);
-  const con = Math.round(known*0.28);
-  const lab = Math.round(known*0.26);
-  const ld  = Math.round(known*0.14);
-  const oth = Math.round(known*0.06);
-  STATE.ids = { con, lab, ld, oth, unk: Math.max(0, cfg.electorate - (con+lab+ld+oth)) };
-
-  STATE.lastOps = null;
-  STATE.pendingPollWeeks = 0;
-  STATE.pendingPoll = null;
-
-  UI.log.innerHTML = "";
-  log(pill("RESET","warn"), `Ward regenerated. Hidden baseline: a marginal with realistic uncertainty. Your job: improve <b>confidence</b>, create <b>persuasion</b>, then <b>turn it out</b>.`);
-  updateUI();
-}
-
-function applyEvent(cfg){
-  // Random weekly drift + occasional discrete events
-  // Drift magnitude scales with volatility and proximity to election.
-  const timePressure = clamp(1.0 + (1 - (cfg.weeksToElection/52))*0.55, 1.0, 1.55);
-  const driftScale = (0.004 + 0.012*cfg.volatility) * timePressure;
-
-  // macro drift: usually small
-  const macro = rnorm(0, driftScale);
-
-  // by default macro helps/opposes Con randomly relative to rivals
-  STATE.true.con = clamp(STATE.true.con + macro, 0.18, 0.58);
-  // rivals adjust to keep sums sane
-  const rivalShift = -macro;
-  // distribute across rivals with noise
-  STATE.true.lab = clamp(STATE.true.lab + rivalShift*0.62 + rnorm(0, driftScale*0.5), 0.18, 0.70);
-  STATE.true.ld  = clamp(STATE.true.ld  + rivalShift*0.25 + rnorm(0, driftScale*0.35),0.05, 0.40);
-  STATE.true.oth = clamp(STATE.true.oth + rivalShift*0.13 + rnorm(0, driftScale*0.25),0.02, 0.25);
-  softNormalize(STATE.true);
-
-  // occasional issue shock
-  if(rnd() < (0.12 + 0.10*cfg.volatility)){
-    const issues = ["services","housing","tax","crime"];
-    const issue = issues[Math.floor(rnd()*issues.length)];
-    const sal = cfg.salience[issue];
-    // shock size and direction
-    const dir = rnd()<0.5 ? -1 : 1;
-    const shock = dir * (0.006 + 0.018*sal) * (0.65 + 0.9*cfg.volatility);
-    // assume shocks often hurt incumbents; here Con is treated as local brand with trust modifier via candidate style
-    STATE.true.con = clamp(STATE.true.con + shock, 0.18, 0.58);
-    // distribute opposite to Lab/LD mostly
-    STATE.true.lab = clamp(STATE.true.lab - shock*0.65, 0.18, 0.70);
-    STATE.true.ld  = clamp(STATE.true.ld  - shock*0.25, 0.05, 0.40);
-    STATE.true.oth = clamp(STATE.true.oth - shock*0.10, 0.02, 0.25);
-    softNormalize(STATE.true);
-
-    const dirWord = shock>0 ? "helped" : "hurt";
-    log(pill("WARD ISSUE","warn"), `A local <b>${issue}</b> shock ${dirWord} the Con brand. True intention moved by ${(Math.abs(shock)*100).toFixed(1)}pp (hidden).`);
-  }
-}
-
-function canvassAndOperate(cfg, gotvMode=false){
-  const cand = candidateProfile(cfg.candidateStyle);
-  const msg = messageAlignment(cfg);
-
-  // Effectiveness declines with burnout; high hours can increase burnout.
-  const eff = clamp(1.0 - 0.55*STATE.burnout, 0.35, 1.0);
-
-  // Data discipline reduces coverage but improves quality.
-  const coverageFactor = clamp(0.55 + 0.65*(1 - cfg.dataDiscipline), 0.45, 1.20);
-
-  // Hours -> doors; burnout and discipline reduce yield
-  const baseDoors = cfg.activistHours * (1.35 + 0.65*(1 - cfg.volatility)); // easier in less volatile/denser wards
-  const doors = Math.max(0, Math.round(baseDoors * eff * coverageFactor));
-
-  // Contact rate depends on candidate vibe + time pressure (closer election more likely contact attempts)
-  const timePressure = clamp(1.0 + (1 - (cfg.weeksToElection/52))*0.45, 1.0, 1.45);
-  const contactRate = clamp(0.28 + 0.22*cand.doorstepVibe + 0.06*timePressure - 0.10*STATE.burnout, 0.18, 0.62);
-  const contacts = Math.round(doors * contactRate);
-
-  // Bias: route choice + activist comfort + candidate style + low discipline + burnout
-  const routeBias = clamp(0.10 + 0.25*(1 - cfg.dataDiscipline) + 0.20*STATE.burnout + (cand.dataQ<0.75 ? 0.05 : 0), 0.08, 0.62);
-
-  // New IDs scale with contacts, reduced if already lots identified
-  const idCeiling = clamp(1 - ((STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth)/cfg.electorate), 0.10, 0.95);
-  const newIDs = Math.round(contacts * (0.55 + 0.25*cfg.dataDiscipline) * idCeiling);
-
-  // Assign IDs based on a biased view of true (you tend to canvass friendlier streets)
-  const biasTowardCon = (rnd()<0.5 ? 1 : -1) * routeBias * 0.08; // can even bias against you
-  const observed = softNormalize({
-    con: clamp(STATE.true.con + biasTowardCon + rnorm(0,0.01), 0.05, 0.80),
-    lab: clamp(STATE.true.lab - biasTowardCon*0.60 + rnorm(0,0.01), 0.05, 0.85),
-    ld : clamp(STATE.true.ld  - biasTowardCon*0.25 + rnorm(0,0.008),0.02, 0.60),
-    oth: clamp(STATE.true.oth - biasTowardCon*0.15 + rnorm(0,0.008),0.01, 0.40)
-  });
-
-  // Update IDs roughly
-  const addCon = Math.round(newIDs * observed.con);
-  const addLab = Math.round(newIDs * observed.lab);
-  const addLD  = Math.round(newIDs * observed.ld);
-  const addOth = Math.max(0, newIDs - addCon - addLab - addLD);
-
-  STATE.ids.con += addCon; STATE.ids.lab += addLab; STATE.ids.ld += addLD; STATE.ids.oth += addOth;
-  const known = STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth;
-  STATE.ids.unk = Math.max(0, cfg.electorate - known);
-
-  // Persuasion: message alignment * candidate persuasion * volatility (more persuadable) * diminishing returns
-  // GOTV mode focuses less on persuasion, more on turnout targeting
-  let swing = 0;
-  if(!gotvMode){
-    const diminishing = clamp(1 - (cfg.activistHours/300), 0.35, 1.0);
-    const persuadable = clamp(0.55 + 0.55*cfg.volatility, 0.60, 1.05);
-    const backlash = (rnd() < msg.backlash) ? -1 : 1; // sometimes message backfires locally
-    swing = backlash * (0.0008 + 0.0030*(msg.align-0.9)) * cand.persuasion * persuadable * diminishing;
-    // tighter data discipline improves persuasion targeting over time
-    swing *= (0.92 + 0.18*cfg.dataDiscipline);
-  } else {
-    swing = 0; // persuasion not focus
+  // buttons lock when finished
+  if(STATE.turn>=STATE.totalTurns || STATE.gameOver){
+    UI.btnTurn.disabled = true;
+    UI.btnAuto.disabled = true;
   }
 
-  // Apply persuasion to TRUE intention (small)
-  if(swing !== 0){
-    STATE.true.con = clamp(STATE.true.con + swing, 0.18, 0.58);
-    // take from best rival more
-    const rival = (STATE.true.lab >= STATE.true.ld) ? "lab" : "ld";
-    STATE.true[rival] = clamp(STATE.true[rival] - swing*0.85, 0.05, 0.80);
-    STATE.true.oth = clamp(STATE.true.oth - swing*0.15, 0.02, 0.25);
-    softNormalize(STATE.true);
-  }
-
-  // Model update: you pull model slightly toward observed, scaled by data quality & discipline & confidence
-  const dq = clamp(0.55 + 0.35*cfg.dataDiscipline, 0.55, 0.90) * cand.dataQ * (1 - 0.25*STATE.burnout);
-  const learnRate = clamp(0.06 + 0.10*dq, 0.06, 0.18);
-
-  STATE.model.con = clamp(STATE.model.con + learnRate*(observed.con - STATE.model.con), 0.05, 0.80);
-  STATE.model.lab = clamp(STATE.model.lab + learnRate*(observed.lab - STATE.model.lab), 0.05, 0.85);
-  STATE.model.ld  = clamp(STATE.model.ld  + learnRate*(observed.ld  - STATE.model.ld ), 0.02, 0.60);
-  STATE.model.oth = clamp(STATE.model.oth + learnRate*(observed.oth - STATE.model.oth), 0.01, 0.40);
-  softNormalize(STATE.model);
-
-  // Confidence rises with IDs and data discipline; falls with burnout and bias
-  const idFrac = clamp(known / cfg.electorate, 0, 1);
-  const confGain = 0.04*(0.4 + 0.6*cfg.dataDiscipline) * (0.35 + 0.65*idFrac) * (1 - routeBias);
-  const confLoss = 0.015*STATE.burnout + 0.02*(routeBias-0.15>0 ? (routeBias-0.15) : 0);
-  STATE.confidence = clamp(STATE.confidence + confGain - confLoss, 0.08, 0.95);
-
-  // GOTV prep increases if you do activity (more if gotv)
-  const gotvGain = gotvMode ? 0.08 : 0.02;
-  STATE.gotvPrep = clamp(STATE.gotvPrep + gotvGain*(0.5 + 0.5*cfg.dataDiscipline), 0, 0.85);
-
-  // Burnout evolves with hours and proximity to election; discipline adds friction
-  const pressure = clamp(0.10 + 0.55*(1 - cfg.weeksToElection/52), 0.10, 0.65);
-  const burnUp = (cfg.activistHours/220) * (0.03 + 0.05*pressure) + 0.01*(cfg.dataDiscipline);
-  const burnDown = 0.012 + 0.01*(cfg.activistHours<60 ? 1 : 0); // easier recovery with lighter weeks
-  STATE.burnout = clamp(STATE.burnout + burnUp - burnDown, 0, 0.95);
-
-  // Candidate gaffe chance scales with time pressure and burnout (sloppy comms)
-  const gaffeChance = clamp(0.02 + 0.12*cand.gaffe*pressure + 0.06*STATE.burnout, 0.01, 0.35);
-  let gaffeHit = 0;
-  if(rnd() < gaffeChance && !gotvMode){
-    // gaffe usually hurts Con and increases volatility and decreases confidence
-    gaffeHit = -(0.006 + 0.016*rnd()) * (0.6 + 0.8*cfg.volatility);
-    STATE.true.con = clamp(STATE.true.con + gaffeHit, 0.18, 0.58);
-    // rivals gain
-    STATE.true.lab = clamp(STATE.true.lab - gaffeHit*0.70, 0.18, 0.70);
-    STATE.true.ld  = clamp(STATE.true.ld  - gaffeHit*0.22, 0.05, 0.40);
-    STATE.true.oth = clamp(STATE.true.oth - gaffeHit*0.08, 0.02, 0.25);
-    softNormalize(STATE.true);
-
-    STATE.confidence = clamp(STATE.confidence - 0.03, 0.08, 0.95);
-    log(pill("GAFFE","bad"), `Candidate mishap hits local socials. True Con intention shifted by ${(Math.abs(gaffeHit)*100).toFixed(1)}pp (hidden). Your internal model may lag until you poll or canvass widely.`);
-  }
-
-  // Store ops
-  const qualityTag = dq > 0.72 ? "Good data quality" : dq > 0.60 ? "Mixed data quality" : "Noisy returns";
-  const swingNote = gotvMode ? "GOTV focus (no persuasion)" :
-    (swing>0 ? "Persuasion gained" : (swing<0 ? "Message backlash" : "No net movement"));
-
-  STATE.lastOps = { doors, contacts, newIDs, bias: routeBias, swing, qualityTag, swingNote };
-  return STATE.lastOps;
+  // if locked, show spend max = remaining in UI hint (not hard constraint)
 }
 
-function processPendingPoll(cfg){
-  if(STATE.pendingPollWeeks > 0){
-    STATE.pendingPollWeeks -= 1;
-    if(STATE.pendingPollWeeks === 0 && STATE.pendingPoll){
-      // reveal poll result and update model
-      const p = STATE.pendingPoll;
-      // update model toward poll, with weight
-      const w = clamp(0.35 + 0.35*STATE.confidence, 0.35, 0.70); // if already confident, poll adjusts less
-      STATE.model.con = clamp(STATE.model.con + w*(p.con - STATE.model.con), 0.05, 0.80);
-      STATE.model.lab = clamp(STATE.model.lab + w*(p.lab - STATE.model.lab), 0.05, 0.85);
-      STATE.model.ld  = clamp(STATE.model.ld  + w*(p.ld  - STATE.model.ld ), 0.02, 0.60);
-      STATE.model.oth = clamp(STATE.model.oth + w*(p.oth - STATE.model.oth), 0.01, 0.40);
-      softNormalize(STATE.model);
-
-      // confidence increases (poll anchors), but leak risk can hurt true support slightly
-      STATE.confidence = clamp(STATE.confidence + 0.10, 0.08, 0.95);
-
-      if(p.leak){
-        const hit = -(0.004 + 0.010*rnd());
-        STATE.true.con = clamp(STATE.true.con + hit, 0.18, 0.58);
-        STATE.true.lab = clamp(STATE.true.lab - hit*0.70, 0.18, 0.70);
-        STATE.true.ld  = clamp(STATE.true.ld  - hit*0.20, 0.05, 0.40);
-        STATE.true.oth = clamp(STATE.true.oth - hit*0.10, 0.02, 0.25);
-        softNormalize(STATE.true);
-        log(pill("POLL LEAK","bad"), `Ward poll leaks. Brief backlash hits Con by ${(Math.abs(hit)*100).toFixed(1)}pp (hidden).`);
-      }
-
-      log(pill("POLL RESULT","warn"),
-        `Ward poll returns (with error): Con <b>${fmtPct(p.con)}</b>, Lab ${fmtPct(p.lab)}, LD ${fmtPct(p.ld)}, Oth ${fmtPct(p.oth)}.
-         Your model shifts toward this anchor; confidence improves.`);
-      STATE.pendingPoll = null;
-    }
-  }
-}
-
-function commissionPoll(){
-  const cfg = readConfig();
-  // Poll has sampling error and a small "house effect"
-  // Accuracy depends on weeksToElection and volatility.
-  const baseMoE = 0.03 + 0.03*cfg.volatility + (cfg.weeksToElection<10 ? 0.01 : 0);
-  const house = rnorm(0, 0.008); // small lean one way
-  const con = clamp(STATE.true.con + rnorm(0, baseMoE/1.96) + house, 0.05, 0.80);
-  const lab = clamp(STATE.true.lab + rnorm(0, baseMoE/1.96) - house*0.60, 0.05, 0.85);
-  const ld  = clamp(STATE.true.ld  + rnorm(0, baseMoE/2.3),  0.02, 0.60);
-  let oth   = clamp(STATE.true.oth + rnorm(0, baseMoE/2.6),  0.01, 0.40);
-
-  const poll = softNormalize({con,lab,ld,oth});
-  // chance of leak rises closer to election and if you're behind
-  const behind = (STATE.model.con < Math.max(STATE.model.lab,STATE.model.ld)) ? 1 : 0;
-  const leakChance = clamp(0.06 + 0.10*(1 - cfg.weeksToElection/52) + 0.06*behind, 0.03, 0.22);
-  poll.leak = rnd() < leakChance;
-
-  // Poll takes 2-3 weeks
-  STATE.pendingPollWeeks = (rnd()<0.55) ? 2 : 3;
-  STATE.pendingPoll = poll;
-
-  log(pill("POLL ORDERED","warn"), `Ward poll commissioned. Results expected in <b>${STATE.pendingPollWeeks}</b> weeks. (Sampling error + house effects apply.)`);
-}
-
-function randomEvent(){
-  const cfg = readConfig();
-  const cand = candidateProfile(cfg.candidateStyle);
-  const pressure = clamp(0.10 + 0.55*(1 - cfg.weeksToElection/52), 0.10, 0.65);
-
-  const roll = rnd();
-  if(roll < 0.30){
-    // Opponent blunder helps Con
-    const swing = (0.006 + 0.016*rnd())*(0.6 + 0.9*cfg.volatility);
-    STATE.true.con = clamp(STATE.true.con + swing, 0.18, 0.58);
-    STATE.true.lab = clamp(STATE.true.lab - swing*0.70, 0.18, 0.70);
-    STATE.true.ld  = clamp(STATE.true.ld  - swing*0.20, 0.05, 0.40);
-    STATE.true.oth = clamp(STATE.true.oth - swing*0.10, 0.02, 0.25);
-    softNormalize(STATE.true);
-    log(pill("OPPONENT ERROR","good"), `Opposition candidate stumbles at a public meeting. True Con intention +${(swing*100).toFixed(1)}pp (hidden).`);
-  } else if(roll < 0.62){
-    // Local service failure blamed on council brand (often hurts incumbents)
-    const hit = -(0.006 + 0.018*rnd())*(0.65 + 0.9*cfg.volatility);
-    STATE.true.con = clamp(STATE.true.con + hit, 0.18, 0.58);
-    STATE.true.lab = clamp(STATE.true.lab - hit*0.72, 0.18, 0.70);
-    STATE.true.ld  = clamp(STATE.true.ld  - hit*0.18, 0.05, 0.40);
-    STATE.true.oth = clamp(STATE.true.oth - hit*0.10, 0.02, 0.25);
-    softNormalize(STATE.true);
-    STATE.confidence = clamp(STATE.confidence - 0.02, 0.08, 0.95);
-    log(pill("LOCAL OUTRAGE","bad"), `A local services incident gives opponents traction. True Con intention −${(Math.abs(hit)*100).toFixed(1)}pp (hidden).`);
-  } else {
-    // Media spotlight: can go either way depending on candidate and message discipline
-    const msg = messageAlignment(cfg);
-    const performance = (0.55*cand.persuasion + 0.25*(1 - cand.gaffe) + 0.20*(1 - msg.backlash)) - 0.20*STATE.burnout;
-    const dir = (performance + rnorm(0,0.12)) > 0.55 ? 1 : -1;
-    const mag = (0.005 + 0.017*rnd())*(0.55 + 0.8*pressure);
-    const delta = dir*mag;
-    STATE.true.con = clamp(STATE.true.con + delta, 0.18, 0.58);
-    // balance
-    const rival = (STATE.true.lab >= STATE.true.ld) ? "lab" : "ld";
-    STATE.true[rival] = clamp(STATE.true[rival] - delta*0.85, 0.05, 0.80);
-    STATE.true.oth = clamp(STATE.true.oth - delta*0.15, 0.02, 0.25);
-    softNormalize(STATE.true);
-
-    log(dir>0 ? pill("MEDIA WIN","good") : pill("MEDIA HIT","bad"),
-      `Regional press attention. Candidate performance ${dir>0 ? "lands well" : "goes poorly"}.
-       True Con intention ${dir>0 ? "+" : "−"}${(Math.abs(delta)*100).toFixed(1)}pp (hidden).`);
-  }
-}
-
-function gotvPushOneWeek(){
-  const cfg = readConfig();
-  // GOTV push: reduces persuasion activity note, increases turnout among your identified supporters
-  const ops = canvassAndOperate(cfg, true);
-
-  // GOTV effect scales with prep, IDs, and burnout (too burnt = sloppy)
-  const idConFrac = clamp(STATE.ids.con / cfg.electorate, 0, 0.35);
-  const gotvEff = clamp((0.6 + 0.9*STATE.gotvPrep) * (0.7 + 0.8*idConFrac) * (1 - 0.45*STATE.burnout), 0.2, 1.35);
-
-  // Convert into a turnout lift for Con relative to others (does not change "intention", changes election day math)
-  // Here we approximate by nudging true support a tiny bit in model as "likely voters"
-  const lift = 0.002 + 0.010*gotvEff * (cfg.weeksToElection<=8 ? 1.15 : 0.85);
-  STATE.model.con = clamp(STATE.model.con + lift, 0.05, 0.80);
-  // take from rivals in model only (likely voters shift)
-  const rival = (STATE.model.lab >= STATE.model.ld) ? "lab" : "ld";
-  STATE.model[rival] = clamp(STATE.model[rival] - lift*0.85, 0.05, 0.85);
-  STATE.model.oth = clamp(STATE.model.oth - lift*0.15, 0.01, 0.40);
-  softNormalize(STATE.model);
-
-  log(pill("GOTV PUSH","warn"),
-    `GOTV week executed. Identified Con universe: <b>${fmtInt(STATE.ids.con)}</b>. GOTV effectiveness ${(gotvEff*100).toFixed(0)}%.
-     Model “likely vote” Con +${(lift*100).toFixed(2)}pp.`);
-}
-
-function runWeek(){
-  const cfg = readConfig();
-
-  // Each week the clock advances: weeks to election decreases
-  // but never below 1 in the UI; we also move STATE.week.
-  STATE.week += 1;
-  UI.weeksToElection.value = clamp(cfg.weeksToElection - 1, 1, 52);
-
-  // Apply background drift and occasional shocks
-  applyEvent(cfg);
-
-  // Process any pending poll (lag)
-  processPendingPoll(cfg);
-
-  // Run field operations for the week (canvass + persuasion)
-  const ops = canvassAndOperate(cfg, false);
-
-  const msg = messageAlignment(cfg);
-  const lead = (STATE.model.con - Math.max(STATE.model.lab, STATE.model.ld))*100;
-
-  log(pill("WEEK","warn"),
-    `Field week: ${fmtInt(ops.doors)} doors, ${fmtInt(ops.contacts)} contacts, ${fmtInt(ops.newIDs)} new IDs.
-     Message alignment ${(msg.align*100).toFixed(0)}% (backlash risk ${(msg.backlash*100).toFixed(0)}%).
-     Current model lead vs best rival: <b>${lead.toFixed(1)}pp</b>.`);
-
-  updateUI();
-}
-
+/* ========= Bindings ========= */
 function bind(){
+  // update labels live
   const inputs = [
-    UI.weeksToElection, UI.electorate, UI.turnoutBase, UI.volatility,
+    UI.wardName, UI.electorate, UI.turnoutBase, UI.volatility, UI.oppStrength,
     UI.salienceServices, UI.salienceHousing, UI.salienceTax, UI.salienceCrime,
-    UI.message, UI.candidateStyle, UI.activistHours, UI.dataDiscipline
+    UI.candidateStyle, UI.budget,
+    UI.fieldHours, UI.candHours, UI.targetMode, UI.script, UI.message, UI.dataDiscipline, UI.spend
   ];
   inputs.forEach(el=>el.addEventListener("input", updateUI));
 
-  UI.btnReset.addEventListener("click", resetWard);
-  UI.btnWeek.addEventListener("click", runWeek);
-  UI.btn4Weeks.addEventListener("click", ()=>{ for(let i=0;i<4;i++) runWeek(); });
-  UI.btnPoll.addEventListener("click", ()=>commissionPoll());
-  UI.btnGOTV.addEventListener("click", ()=>{ gotvPushOneWeek(); runWeek(); });
-  UI.btnScandal.addEventListener("click", ()=>{ randomEvent(); updateUI(); });
+  UI.btnReset.addEventListener("click", resetGame);
+  UI.btnTurn.addEventListener("click", runTurn);
+  UI.btnAuto.addEventListener("click", ()=>{ for(let i=0;i<5;i++){ if(!STATE.gameOver) runTurn(); } });
+  UI.btnPoll.addEventListener("click", commissionPoll);
+  UI.btnEvent.addEventListener("click", ()=>{ if(!STATE.gameOver){ forceRandomEvent(getEffectiveCfg()); updateUI(); }});
 }
 
 bind();
-resetWard();
+resetGame();
 </script>
 </body>
 </html>
