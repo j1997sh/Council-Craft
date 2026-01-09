@@ -1,332 +1,956 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Ward Manager (UK)</title>
-
-<style>
-:root{
-  color-scheme: light dark;
-  --bg: Canvas;
-  --fg: CanvasText;
-  --muted: color-mix(in oklab, var(--fg) 65%, transparent);
-  --line: color-mix(in oklab, var(--fg) 18%, transparent);
-  --card: color-mix(in oklab, var(--bg) 92%, var(--fg) 8%);
-  --radius: 14px;
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:system-ui;background:var(--bg);color:var(--fg)}
-header{
-  padding:14px 16px;
-  border-bottom:1px solid var(--line);
-  display:flex;align-items:center;gap:12px
-}
-header h1{font-size:16px;margin:0;font-weight:900}
-nav{display:flex;gap:8px}
-nav button{
-  border:1px solid var(--line);
-  background:transparent;
-  border-radius:999px;
-  padding:6px 12px;
-  font-weight:700;
-  cursor:pointer;
-  color:var(--muted)
-}
-nav button.active{background:var(--card);color:var(--fg)}
-main{max-width:1200px;margin:0 auto;padding:16px}
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:14px;
-  margin-bottom:16px
-}
-.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.spacer{flex:1}
-h2,h3{margin:0 0 6px 0}
-.small{font-size:12px;color:var(--muted)}
-table{width:100%;border-collapse:collapse}
-th,td{padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px;text-align:left}
-th{color:var(--muted)}
-button.action{
-  border:1px solid var(--line);
-  background:transparent;
-  border-radius:10px;
-  padding:10px 12px;
-  font-weight:700;
-  cursor:pointer
-}
-button.action:hover{filter:brightness(1.05)}
-select{
-  border:1px solid var(--line);
-  background:transparent;
-  border-radius:10px;
-  padding:8px 10px
-}
-.log{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap}
-.hidden{display:none}
-.badge{
-  border:1px solid var(--line);
-  border-radius:999px;
-  padding:2px 8px;
-  font-size:11px;
-  color:var(--muted)
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Single Ward Deep-Dive Simulation — "Millbrook" (Council Ward)</title>
+  <style>
+    :root{--bg:#0b1020;--card:#111a33;--muted:#8aa0c6;--text:#e9f0ff;--good:#45e0a8;--bad:#ff6b6b;--warn:#ffd166;--accent:#67a2ff}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:linear-gradient(180deg,#070a14 0%, #0b1020 45%, #070a14 100%)}
+    header{padding:18px 18px 10px;border-bottom:1px solid rgba(255,255,255,.08);position:sticky;top:0;background:rgba(7,10,20,.92);backdrop-filter:blur(10px);z-index:10}
+    h1{margin:0;font-size:16px;font-weight:650;letter-spacing:.2px}
+    header .sub{margin-top:6px;color:var(--muted);font-size:12px;line-height:1.25}
+    main{padding:16px;max-width:1200px;margin:0 auto}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:14px}
+    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
+    .card{background:linear-gradient(180deg,rgba(17,26,51,.92),rgba(17,26,51,.72));
+      border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .card h2{margin:0 0 10px;font-size:13px;color:#cfe1ff}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .kpi{flex:1;min-width:150px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px}
+    .kpi .label{font-size:11px;color:var(--muted)}
+    .kpi .value{font-size:18px;font-weight:700;margin-top:4px}
+    .kpi .hint{font-size:11px;color:var(--muted);margin-top:2px}
+    .barwrap{margin-top:10px}
+    .bar{height:12px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+    .bar>span{display:block;height:100%}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+    .dot{width:10px;height:10px;border-radius:999px;display:inline-block;margin-right:6px}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .controls .full{grid-column:1/-1}
+    label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px}
+    input[type="range"], input[type="number"], select{width:100%}
+    input[type="number"], select{
+      background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);color:var(--text);
+      padding:8px;border-radius:10px;outline:none
+    }
+    input[type="range"]{accent-color:var(--accent)}
+    button{
+      background:linear-gradient(180deg,rgba(103,162,255,.95),rgba(103,162,255,.72));
+      color:#081026;border:none;border-radius:12px;padding:10px 12px;font-weight:700;cursor:pointer;
+      box-shadow:0 8px 18px rgba(103,162,255,.25)
+    }
+    button.secondary{
+      background:rgba(255,255,255,.07);color:var(--text);border:1px solid rgba(255,255,255,.10);
+      box-shadow:none
+    }
+    button.danger{
+      background:linear-gradient(180deg,rgba(255,107,107,.95),rgba(255,107,107,.72));color:#250909
+    }
+    .btnrow{display:flex;gap:10px;flex-wrap:wrap}
+    .small{font-size:11px;color:var(--muted);line-height:1.35}
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    td,th{font-size:12px;padding:9px 10px}
+    th{color:var(--muted);font-weight:600;text-align:left}
+    tr{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    tr td:first-child, tr th:first-child{border-top-left-radius:12px;border-bottom-left-radius:12px}
+    tr td:last-child, tr th:last-child{border-top-right-radius:12px;border-bottom-right-radius:12px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:11px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05)}
+    .pill.good{border-color:rgba(69,224,168,.35);color:#bff7e5}
+    .pill.bad{border-color:rgba(255,107,107,.35);color:#ffd0d0}
+    .pill.warn{border-color:rgba(255,209,102,.35);color:#fff1c9}
+    .log{height:270px;overflow:auto;padding-right:8px}
+    .logitem{
+      padding:10px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);
+      background:rgba(0,0,0,.22);margin-bottom:10px
+    }
+    .logitem .t{display:flex;justify-content:space-between;gap:10px}
+    .logitem .t .when{font-size:11px;color:var(--muted)}
+    .logitem .t .tag{font-size:11px}
+    .logitem .msg{margin-top:6px;font-size:12px;line-height:1.35;color:#dbe7ff}
+    .muted{color:var(--muted)}
+    .divider{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width: 980px){.two{grid-template-columns:1fr}}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+  </style>
 </head>
-
 <body>
-
 <header>
-  <h1>Ward Manager (UK)</h1>
-  <nav>
-    <button class="active" data-tab="overview">Overview</button>
-    <button data-tab="crosstabs">Crosstabs</button>
-    <button data-tab="district">District</button>
-  </nav>
-  <div class="spacer"></div>
-  <span class="badge" id="weekLabel"></span>
-  <button class="action" onclick="advanceWeek()">Advance Week ▶</button>
+  <h1>Single Ward Deep-Dive Simulation — Millbrook (20-seat Council)</h1>
+  <div class="sub">
+    You are the <b>Conservative Campaign Manager</b>. This ward is a classic marginal.
+    Everything here is <b>model-driven</b>: canvass bias, polling error, issue salience, message drift, GOTV, and volunteer burnout.
+  </div>
 </header>
 
 <main>
+  <div class="grid">
+    <!-- LEFT: Controls / inputs -->
+    <section class="card">
+      <h2>Ward Setup & Strategy</h2>
 
-<!-- ================= CAMPAIGN HQ ================= -->
-<div class="card">
-  <h2>Campaign HQ — This Week</h2>
+      <div class="controls">
+        <div>
+          <label>Weeks to election (simulation clock)</label>
+          <input id="weeksToElection" type="number" min="1" max="52" step="1" value="18" />
+          <div class="small">Lower weeks increases volatility and media sensitivity.</div>
+        </div>
 
-  <div class="row">
-    <span>Money: <b id="money"></b></span>
-    <span>Volunteers: <b id="vols"></b></span>
-    <span>Energy: <b id="energy"></b></span>
-  </div>
+        <div>
+          <label>Electorate</label>
+          <input id="electorate" type="number" min="1500" max="12000" step="50" value="4800" />
+          <div class="small">Affects total votes and ground-game scale.</div>
+        </div>
 
-  <hr/>
+        <div class="full">
+          <label>Base Turnout (%)</label>
+          <input id="turnoutBase" type="range" min="25" max="60" value="38" />
+          <div class="small"><span id="turnoutBaseVal" class="mono"></span> — baseline before GOTV, weather, scandals.</div>
+        </div>
 
-  <div class="row" style="align-items:flex-start">
-    <div style="flex:2">
-      <h3>Add action</h3>
+        <div class="full">
+          <label>Ward volatility (how swingy the voters are)</label>
+          <input id="volatility" type="range" min="0" max="100" value="62" />
+          <div class="small"><span id="volatilityVal" class="mono"></span> — higher means issues + events move voters more.</div>
+        </div>
+
+        <div class="full">
+          <label>Issue Salience (how much each issue matters locally)</label>
+          <div class="two">
+            <div>
+              <label>Local Services</label>
+              <input id="salienceServices" type="range" min="0" max="100" value="75" />
+              <div class="small"><span id="salienceServicesVal" class="mono"></span></div>
+            </div>
+            <div>
+              <label>Housing & Development</label>
+              <input id="salienceHousing" type="range" min="0" max="100" value="82" />
+              <div class="small"><span id="salienceHousingVal" class="mono"></span></div>
+            </div>
+            <div>
+              <label>Tax & Value for Money</label>
+              <input id="salienceTax" type="range" min="0" max="100" value="58" />
+              <div class="small"><span id="salienceTaxVal" class="mono"></span></div>
+            </div>
+            <div>
+              <label>Crime & ASB</label>
+              <input id="salienceCrime" type="range" min="0" max="100" value="41" />
+              <div class="small"><span id="salienceCrimeVal" class="mono"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="full divider"></div>
+
+        <div>
+          <label>Message Emphasis</label>
+          <select id="message">
+            <option value="services">Protect services & fix basics</option>
+            <option value="housing">Control development & local planning</option>
+            <option value="tax">Keep council tax down & efficiency</option>
+            <option value="crime">Tough on ASB, visible enforcement</option>
+            <option value="balanced" selected>Balanced & hyper-local</option>
+          </select>
+          <div class="small">This changes persuasion by issue alignment and can trigger backlash if misaligned.</div>
+        </div>
+
+        <div>
+          <label>Candidate style</label>
+          <select id="candidateStyle">
+            <option value="disciplined" selected>Disciplined operator</option>
+            <option value="charismatic">Charismatic maverick</option>
+            <option value="localHero">Deep local roots</option>
+            <option value="gaffeProne">Gaffe-prone grinder</option>
+          </select>
+          <div class="small">Impacts doorstep conversion, media risk, and data quality.</div>
+        </div>
+
+        <div class="full">
+          <label>Activist hours / week allocated to this ward</label>
+          <input id="activistHours" type="range" min="0" max="220" value="95" />
+          <div class="small"><span id="activistHoursVal" class="mono"></span> — includes canvassing, delivery, phonebanks, GOTV prep.</div>
+        </div>
+
+        <div class="full">
+          <label>Data discipline (how strict you are on clean canvass returns)</label>
+          <input id="dataDiscipline" type="range" min="0" max="100" value="68" />
+          <div class="small"><span id="dataDisciplineVal" class="mono"></span> — higher reduces bias but slows coverage and annoys activists.</div>
+        </div>
+
+        <div class="full divider"></div>
+
+        <div class="full btnrow">
+          <button id="btnReset" class="secondary">Reset Ward</button>
+          <button id="btnWeek">Run 1 Week</button>
+          <button id="btn4Weeks" class="secondary">Run 4 Weeks</button>
+          <button id="btnPoll" class="secondary">Commission Ward Poll</button>
+          <button id="btnGOTV" class="secondary">Run GOTV Push (1 week)</button>
+          <button id="btnScandal" class="danger">Trigger Random Event</button>
+        </div>
+
+        <div class="full small">
+          Tip: Use <b>canvass</b> to improve your voter model. Use <b>polls</b> to correct model drift (but polls can be wrong or leak).
+          Use <b>GOTV</b> late — it increases turnout among your identified supporters, but burns out activists.
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Dashboards -->
+    <section class="card">
+      <h2>Ward Dashboard</h2>
 
       <div class="row">
-        <select id="hqType">
-          <option value="canvass">Door knock (segment)</option>
-          <option value="leaflet">Leaflet drop (issue)</option>
-          <option value="fundraise">Fundraise</option>
-          <option value="train">Volunteer training</option>
-        </select>
-
-        <select id="hqDistrict"></select>
-        <select id="hqDetail"></select>
-
-        <button class="action" onclick="addHQ()">Add</button>
+        <div class="kpi">
+          <div class="label">Internal Model (Con share)</div>
+          <div id="kpiModel" class="value">—</div>
+          <div id="kpiModelHint" class="hint">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Estimated Win Chance</div>
+          <div id="kpiWin" class="value">—</div>
+          <div id="kpiWinHint" class="hint">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Data Confidence</div>
+          <div id="kpiConf" class="value">—</div>
+          <div id="kpiConfHint" class="hint">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Activist Burnout</div>
+          <div id="kpiBurn" class="value">—</div>
+          <div id="kpiBurnHint" class="hint">—</div>
+        </div>
       </div>
 
-      <div class="small">
-        Actions cost resources and directly affect districts.
+      <div class="divider"></div>
+
+      <div class="two">
+        <div class="card" style="padding:12px">
+          <h2 style="margin-bottom:6px">Support Estimate (Model)</h2>
+          <div class="barwrap">
+            <div class="small muted">Conservative</div>
+            <div class="bar"><span id="barCon" style="width:0%;background:var(--accent)"></span></div>
+          </div>
+          <div class="barwrap">
+            <div class="small muted">Labour</div>
+            <div class="bar"><span id="barLab" style="width:0%;background:rgba(255,107,107,.9)"></span></div>
+          </div>
+          <div class="barwrap">
+            <div class="small muted">Lib Dem</div>
+            <div class="bar"><span id="barLD" style="width:0%;background:rgba(255,209,102,.9)"></span></div>
+          </div>
+          <div class="barwrap">
+            <div class="small muted">Other</div>
+            <div class="bar"><span id="barOth" style="width:0%;background:rgba(69,224,168,.85)"></span></div>
+          </div>
+
+          <div class="legend">
+            <span><span class="dot" style="background:var(--accent)"></span>Con</span>
+            <span><span class="dot" style="background:rgba(255,107,107,.9)"></span>Lab</span>
+            <span><span class="dot" style="background:rgba(255,209,102,.9)"></span>LD</span>
+            <span><span class="dot" style="background:rgba(69,224,168,.85)"></span>Oth</span>
+          </div>
+        </div>
+
+        <div class="card" style="padding:12px">
+          <h2 style="margin-bottom:6px">Field Operations (This Week)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody id="opsTable"></tbody>
+          </table>
+          <div class="small muted">
+            Doorstep results influence your model, but can be biased by route choice, volunteer skill, and candidate vibes.
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div style="flex:3">
-      <h3>Planned actions</h3>
-      <table>
-        <thead>
-          <tr><th>Action</th><th>Target</th><th>Cost</th><th></th></tr>
-        </thead>
-        <tbody id="hqQueue"></tbody>
-      </table>
-      <div class="small">At least one action required to advance.</div>
-    </div>
+      <div class="divider"></div>
+
+      <div class="two">
+        <div class="card" style="padding:12px">
+          <h2 style="margin-bottom:8px">Targeting Recommendation</h2>
+          <div id="targeting" class="small">—</div>
+          <div class="divider"></div>
+          <div class="small muted">
+            This is a single-ward slice: the “right” play depends on what else is happening across the 20-seat council map.
+          </div>
+        </div>
+
+        <div class="card" style="padding:12px">
+          <h2 style="margin-bottom:8px">Activity Log</h2>
+          <div class="log" id="log"></div>
+        </div>
+      </div>
+    </section>
   </div>
-</div>
-
-<!-- ================= OVERVIEW ================= -->
-<div class="card tab" id="tab-overview">
-  <h2>District summary (latent)</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>District</th><th>You</th><th>Con</th><th>Lab</th><th>Ind</th>
-      </tr>
-    </thead>
-    <tbody id="districtTable"></tbody>
-  </table>
-</div>
-
-<!-- ================= CROSSTABS ================= -->
-<div class="card tab hidden" id="tab-crosstabs">
-  <h2>Crosstabs (directional)</h2>
-  <div class="small">
-    Crosstabs removed from main loop; this view is informational only.
-  </div>
-</div>
-
-<!-- ================= DISTRICT ================= -->
-<div class="card tab hidden" id="tab-district">
-  <h2>District detail</h2>
-  <div class="small">Select a district above to drill in.</div>
-</div>
-
-<!-- ================= LOG ================= -->
-<div class="card">
-  <h2>Campaign log</h2>
-  <div class="log" id="log"></div>
-</div>
-
 </main>
 
 <script>
-/* ================= STATE ================= */
-const GAME={
-  week:1,totalWeeks:24,
-  money:6200,vols:110,energy:85,
-  districts:[
-    {name:"Riverside Estate",s:{you:.274,con:.303,lab:.322,ind:.10}},
-    {name:"Old Greybridge",s:{you:.260,con:.355,lab:.289,ind:.096}},
-    {name:"Kingsway Newbuilds",s:{you:.295,con:.306,lab:.299,ind:.10}},
-    {name:"St. Mark’s Village",s:{you:.257,con:.364,lab:.283,ind:.096}},
-    {name:"Industrial Crescent",s:{you:.267,con:.307,lab:.329,ind:.097}},
-  ],
-  hq:[ ],
-  log:[ ]
+/**
+ * SINGLE WARD SIMULATION
+ * - Underlying "true" voter intention distribution (hidden)
+ * - Your internal model (estimated) updated via canvass returns and occasional polls
+ * - Events shift true intention and turnout; you can mitigate with message alignment + discipline
+ *
+ * This is intentionally simplified but deep:
+ *  - Canvass returns are biased; data discipline reduces bias but reduces coverage.
+ *  - Activist hours create contact volume, but burnout reduces effectiveness and increases errors.
+ *  - Candidate traits affect persuasion, gaffe risk, and canvass data quality.
+ *  - A ward poll can correct model drift but includes sampling error, house effects, and leak risk.
+ */
+
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+function rnd(){ return Math.random(); }
+function rnorm(mean=0, sd=1){
+  // Box-Muller
+  let u=0, v=0;
+  while(u===0) u=rnd();
+  while(v===0) v=rnd();
+  const z=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+  return mean + sd*z;
+}
+function fmtPct(x){ return (x*100).toFixed(1) + "%"; }
+function fmtInt(x){ return Math.round(x).toLocaleString("en-GB"); }
+
+const UI = {
+  weeksToElection: document.getElementById("weeksToElection"),
+  electorate: document.getElementById("electorate"),
+  turnoutBase: document.getElementById("turnoutBase"),
+  volatility: document.getElementById("volatility"),
+  salienceServices: document.getElementById("salienceServices"),
+  salienceHousing: document.getElementById("salienceHousing"),
+  salienceTax: document.getElementById("salienceTax"),
+  salienceCrime: document.getElementById("salienceCrime"),
+  message: document.getElementById("message"),
+  candidateStyle: document.getElementById("candidateStyle"),
+  activistHours: document.getElementById("activistHours"),
+  dataDiscipline: document.getElementById("dataDiscipline"),
+
+  turnoutBaseVal: document.getElementById("turnoutBaseVal"),
+  volatilityVal: document.getElementById("volatilityVal"),
+  salienceServicesVal: document.getElementById("salienceServicesVal"),
+  salienceHousingVal: document.getElementById("salienceHousingVal"),
+  salienceTaxVal: document.getElementById("salienceTaxVal"),
+  salienceCrimeVal: document.getElementById("salienceCrimeVal"),
+  activistHoursVal: document.getElementById("activistHoursVal"),
+  dataDisciplineVal: document.getElementById("dataDisciplineVal"),
+
+  kpiModel: document.getElementById("kpiModel"),
+  kpiModelHint: document.getElementById("kpiModelHint"),
+  kpiWin: document.getElementById("kpiWin"),
+  kpiWinHint: document.getElementById("kpiWinHint"),
+  kpiConf: document.getElementById("kpiConf"),
+  kpiConfHint: document.getElementById("kpiConfHint"),
+  kpiBurn: document.getElementById("kpiBurn"),
+  kpiBurnHint: document.getElementById("kpiBurnHint"),
+
+  barCon: document.getElementById("barCon"),
+  barLab: document.getElementById("barLab"),
+  barLD: document.getElementById("barLD"),
+  barOth: document.getElementById("barOth"),
+
+  opsTable: document.getElementById("opsTable"),
+  targeting: document.getElementById("targeting"),
+  log: document.getElementById("log"),
+
+  btnReset: document.getElementById("btnReset"),
+  btnWeek: document.getElementById("btnWeek"),
+  btn4Weeks: document.getElementById("btn4Weeks"),
+  btnPoll: document.getElementById("btnPoll"),
+  btnGOTV: document.getElementById("btnGOTV"),
+  btnScandal: document.getElementById("btnScandal")
 };
 
-/* ================= NAV ================= */
-document.querySelectorAll("nav button").forEach(b=>{
-  b.onclick=()=>{
-    document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    document.querySelectorAll(".tab").forEach(t=>t.classList.add("hidden"));
-    document.getElementById("tab-"+b.dataset.tab).classList.remove("hidden");
+const STATE = {
+  week: 0,
+  // Hidden "true" support shares (sum to 1)
+  true: { con:0.34, lab:0.41, ld:0.17, oth:0.08 },
+  // Your internal model estimate
+  model: { con:0.33, lab:0.42, ld:0.16, oth:0.09 },
+  // Confidence in model (0..1)
+  confidence: 0.38,
+  // Burnout (0..1)
+  burnout: 0.18,
+  // Identified universe (counts)
+  ids: { con: 120, lab: 110, ld: 50, oth: 20, unk: 4500 },
+  // GOTV readiness multiplier
+  gotvPrep: 0.10,
+  // last week ops
+  lastOps: null,
+  // pending poll (for lag)
+  pendingPollWeeks: 0,
+  pendingPoll: null
+};
+
+function softNormalize(p){
+  const s = p.con + p.lab + p.ld + p.oth;
+  p.con/=s; p.lab/=s; p.ld/=s; p.oth/=s;
+  return p;
+}
+
+function readConfig(){
+  const cfg = {
+    weeksToElection: clamp(parseInt(UI.weeksToElection.value||"18",10),1,52),
+    electorate: clamp(parseInt(UI.electorate.value||"4800",10),1500,12000),
+    turnoutBase: clamp(parseInt(UI.turnoutBase.value||"38",10),25,60)/100,
+    volatility: clamp(parseInt(UI.volatility.value||"62",10),0,100)/100,
+    salience: {
+      services: clamp(parseInt(UI.salienceServices.value||"75",10),0,100)/100,
+      housing: clamp(parseInt(UI.salienceHousing.value||"82",10),0,100)/100,
+      tax: clamp(parseInt(UI.salienceTax.value||"58",10),0,100)/100,
+      crime: clamp(parseInt(UI.salienceCrime.value||"41",10),0,100)/100
+    },
+    message: UI.message.value,
+    candidateStyle: UI.candidateStyle.value,
+    activistHours: clamp(parseInt(UI.activistHours.value||"95",10),0,220),
+    dataDiscipline: clamp(parseInt(UI.dataDiscipline.value||"68",10),0,100)/100
   };
-});
+  // keep IDs consistent with electorate
+  const known = STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth;
+  STATE.ids.unk = Math.max(0, cfg.electorate - known);
 
-/* ================= HQ ================= */
-function populateHQ(){
-  hqDistrict.innerHTML="";
-  GAME.districts.forEach(d=>{
-    const o=document.createElement("option");
-    o.value=d.name;o.textContent=d.name;
-    hqDistrict.appendChild(o);
-  });
-  updateHQDetail();
+  return cfg;
 }
 
-hqType.onchange=updateHQDetail;
-
-function updateHQDetail(){
-  hqDetail.innerHTML="";
-  const t=hqType.value;
-  let opts=[];
-  if(t==="canvass") opts=["Young renters","Older owners","Working families"];
-  if(t==="leaflet") opts=["ASB","Parking","Council tax","Housing"];
-  if(t==="fundraise") opts=["Email list","Local donors","Event"];
-  if(t==="train") opts=["Volunteers"];
-  opts.forEach(v=>{
-    const o=document.createElement("option");
-    o.value=v;o.textContent=v;
-    hqDetail.appendChild(o);
-  });
+function candidateProfile(style){
+  // returns modifiers for persuasion, gaffe risk, data quality
+  switch(style){
+    case "disciplined":
+      return { persuasion: 0.8, gaffe: 0.35, dataQ: 0.85, doorstepVibe: 0.55 };
+    case "charismatic":
+      return { persuasion: 1.1, gaffe: 0.55, dataQ: 0.70, doorstepVibe: 0.75 };
+    case "localHero":
+      return { persuasion: 0.95, gaffe: 0.40, dataQ: 0.80, doorstepVibe: 0.68, trustBoost: 0.015 };
+    case "gaffeProne":
+      return { persuasion: 0.85, gaffe: 0.80, dataQ: 0.62, doorstepVibe: 0.50 };
+    default:
+      return { persuasion: 0.9, gaffe: 0.45, dataQ: 0.78, doorstepVibe: 0.60 };
+  }
 }
 
-function addHQ(){
-  GAME.hq.push({
-    type:hqType.value,
-    district:hqDistrict.value,
-    detail:hqDetail.value
-  });
-  renderHQ();
+function messageAlignment(cfg){
+  // Ward issue salience affects payoff to the chosen message.
+  // Returns a scalar (0.75..1.15) and a backlash risk
+  const s = cfg.salience;
+  let align = 1.0;
+  let backlash = 0.0;
+
+  if(cfg.message==="balanced"){
+    // balanced avoids backlash but caps upside
+    align = 1.02 - 0.07*Math.abs((s.housing+s.services)/2 - 0.75);
+    backlash = 0.05;
+  } else if(cfg.message==="services"){
+    align = 0.85 + 0.45*s.services;
+    backlash = 0.08 + 0.20*(1 - s.services);
+  } else if(cfg.message==="housing"){
+    align = 0.85 + 0.45*s.housing;
+    backlash = 0.08 + 0.20*(1 - s.housing);
+  } else if(cfg.message==="tax"){
+    align = 0.85 + 0.45*s.tax;
+    backlash = 0.08 + 0.20*(1 - s.tax);
+  } else if(cfg.message==="crime"){
+    align = 0.85 + 0.45*s.crime;
+    backlash = 0.08 + 0.20*(1 - s.crime);
+  }
+  return { align: clamp(align,0.75,1.15), backlash: clamp(backlash,0,0.35) };
 }
 
-function removeHQ(i){
-  GAME.hq.splice(i,1);
-  renderHQ();
+function log(tag, msg){
+  const div=document.createElement("div");
+  div.className="logitem";
+  const when = `Week ${STATE.week}`;
+  div.innerHTML = `
+    <div class="t">
+      <div class="when">${when}</div>
+      <div class="tag">${tag}</div>
+    </div>
+    <div class="msg">${msg}</div>
+  `;
+  UI.log.prepend(div);
 }
 
-function renderHQ(){
-  hqQueue.innerHTML="";
-  GAME.hq.forEach((a,i)=>{
+function pill(text, kind){
+  return `<span class="pill ${kind||""}">${text}</span>`;
+}
+
+function winChanceFromModel(model, cfg){
+  // convert estimated lead into win chance, adjusted by volatility and confidence
+  const lead = model.con - Math.max(model.lab, model.ld); // lead over best rival
+  const base = 0.5 + (lead * 2.3); // steepness
+  const volPenalty = 0.22 * cfg.volatility;
+  const confBoost = 0.18 * (STATE.confidence - 0.5); // negative if low confidence
+  const wc = clamp(base - volPenalty + confBoost, 0.03, 0.97);
+  return wc;
+}
+
+function estimateMoE(cfg){
+  // simple: confidence increases effective sample size; burnout and low discipline reduce it
+  const eff = 120 + 1300*STATE.confidence;
+  const p = STATE.model.con;
+  const se = Math.sqrt((p*(1-p))/Math.max(80,eff));
+  const moe = 1.96*se + 0.01*cfg.volatility + 0.015*STATE.burnout;
+  return clamp(moe, 0.015, 0.09);
+}
+
+function updateUI(){
+  const cfg = readConfig();
+  UI.turnoutBaseVal.textContent = (cfg.turnoutBase*100).toFixed(0) + "%";
+  UI.volatilityVal.textContent = (cfg.volatility*100).toFixed(0) + "/100";
+  UI.salienceServicesVal.textContent = (cfg.salience.services*100).toFixed(0) + "/100";
+  UI.salienceHousingVal.textContent = (cfg.salience.housing*100).toFixed(0) + "/100";
+  UI.salienceTaxVal.textContent = (cfg.salience.tax*100).toFixed(0) + "/100";
+  UI.salienceCrimeVal.textContent = (cfg.salience.crime*100).toFixed(0) + "/100";
+  UI.activistHoursVal.textContent = cfg.activistHours + " hrs";
+  UI.dataDisciplineVal.textContent = (cfg.dataDiscipline*100).toFixed(0) + "/100";
+
+  const moe = estimateMoE(cfg);
+  const win = winChanceFromModel(STATE.model, cfg);
+
+  UI.kpiModel.textContent = fmtPct(STATE.model.con);
+  UI.kpiModelHint.textContent = `MoE approx ±${(moe*100).toFixed(1)}pp (internal)`;
+
+  UI.kpiWin.textContent = (win*100).toFixed(0) + "%";
+  UI.kpiWinHint.textContent = `Lead vs best rival: ${((STATE.model.con - Math.max(STATE.model.lab,STATE.model.ld))*100).toFixed(1)}pp`;
+
+  UI.kpiConf.textContent = (STATE.confidence*100).toFixed(0) + "%";
+  UI.kpiConfHint.textContent = `IDs: ${fmtInt(STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth)} / ${fmtInt(cfg.electorate)}`;
+
+  UI.kpiBurn.textContent = (STATE.burnout*100).toFixed(0) + "%";
+  UI.kpiBurnHint.textContent = STATE.burnout>0.65 ? "Effectiveness collapsing" : "Manageable";
+
+  // bars
+  UI.barCon.style.width = (STATE.model.con*100).toFixed(1)+"%";
+  UI.barLab.style.width = (STATE.model.lab*100).toFixed(1)+"%";
+  UI.barLD.style.width  = (STATE.model.ld*100).toFixed(1)+"%";
+  UI.barOth.style.width = (STATE.model.oth*100).toFixed(1)+"%";
+
+  // ops table
+  const ops = STATE.lastOps;
+  UI.opsTable.innerHTML = "";
+  const rows = [
+    ["Doors knocked", ops?fmtInt(ops.doors):"—", ops? (ops.qualityTag) : "—"],
+    ["Contacts made", ops?fmtInt(ops.contacts):"—", ops? `Contact rate ${(ops.contacts/Math.max(1,ops.doors)*100).toFixed(0)}%` : "—"],
+    ["New IDs", ops?fmtInt(ops.newIDs):"—", ops? `Bias risk ${(ops.bias*100).toFixed(0)}%` : "—"],
+    ["Persuasion swing", ops? ((ops.swing*100).toFixed(2)+"pp") : "—", ops? ops.swingNote : "—"],
+    ["GOTV prep", ops? ((STATE.gotvPrep*100).toFixed(0)+"%") : ((STATE.gotvPrep*100).toFixed(0)+"%"), "Increases turnout among identified Con supporters"]
+  ];
+  for(const [m,v,n] of rows){
     const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${a.type}</td>
-      <td>${a.district} / ${a.detail}</td>
-      <td>${hqCost(a)}</td>
-      <td><button class="action" onclick="removeHQ(${i})">✕</button></td>
-    `;
-    hqQueue.appendChild(tr);
-  });
-}
-
-function hqCost(a){
-  if(a.type==="canvass") return "Energy −8, Vol −10";
-  if(a.type==="leaflet") return "£300, Vol −8";
-  if(a.type==="fundraise") return "Energy −6";
-  if(a.type==="train") return "£200";
-  return "—";
-}
-
-/* ================= TURN ================= */
-function advanceWeek(){
-  if(GAME.hq.length===0){
-    alert("Plan at least one campaign action.");
-    return;
+    tr.innerHTML = `<td>${m}</td><td class="mono">${v}</td><td class="muted">${n}</td>`;
+    UI.opsTable.appendChild(tr);
   }
 
-  GAME.hq.forEach(a=>{
-    const d=GAME.districts.find(x=>x.name===a.district);
-    if(a.type==="canvass"){
-      d.s.you+=0.01;
-      GAME.energy-=8;
-    }
-    if(a.type==="leaflet"){
-      GAME.money-=300;
-      d.s.you+=0.008;
-    }
-    if(a.type==="fundraise"){
-      const g=400+Math.floor(Math.random()*400);
-      GAME.money+=g;
-      GAME.energy-=6;
-      GAME.log.push(`Fundraised £${g}.`);
-    }
-    if(a.type==="train"){
-      GAME.money-=200;
-      GAME.log.push("Volunteers trained.");
-    }
-  });
-
-  GAME.hq=[];
-  GAME.week++;
-  render();
+  // targeting recommendation
+  const lead = STATE.model.con - Math.max(STATE.model.lab, STATE.model.ld);
+  let rec = "";
+  if(lead > 0.08 && win > 0.75){
+    rec += `${pill("Lean Hold / Safe-ish", "good")} You can reduce weekly hours slightly and redeploy, but keep data ticking over to prevent surprise drift.`;
+  } else if(lead > 0.03){
+    rec += `${pill("Marginal Hold", "warn")} Maintain pressure. Focus on disciplined message and ID expansion. Consider a poll if confidence is low.`;
+  } else if(lead > -0.02){
+    rec += `${pill("Toss-Up", "warn")} Treat as must-win: prioritise persuasion routes + tighten data discipline. GOTV prep matters from ~6 weeks out.`;
+  } else if(lead > -0.06){
+    rec += `${pill("Marginal Gain", "warn")} You need either (a) high-intensity field + perfect message fit or (b) opponent error. Poll to verify viability.`;
+  } else {
+    rec += `${pill("Stretch / No-Hope", "bad")} Only justify spend if council path demands it or you can trigger a local wedge. Data-led triage recommended.`;
+  }
+  rec += `<div class="divider"></div>
+    <div class="small muted">
+      Suggested next action: <b>${
+        (STATE.confidence<0.45 && cfg.weeksToElection>6) ? "Run more canvass for model confidence." :
+        (STATE.confidence<0.55 && cfg.weeksToElection<=10) ? "Commission a poll to correct model drift." :
+        (cfg.weeksToElection<=6) ? "Shift hours into GOTV + chase postal voters." :
+        "Tune message to ward salience and expand IDs."
+      }</b>
+    </div>`;
+  UI.targeting.innerHTML = rec;
 }
 
-/* ================= RENDER ================= */
-function render(){
-  weekLabel.textContent=`Week ${GAME.week}/${GAME.totalWeeks}`;
-  money.textContent=`£${GAME.money}`;
-  vols.textContent=GAME.vols;
-  energy.textContent=GAME.energy;
-
-  districtTable.innerHTML="";
-  GAME.districts.forEach(d=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${d.name}</td>
-      <td>${(d.s.you*100).toFixed(1)}%</td>
-      <td>${(d.s.con*100).toFixed(1)}%</td>
-      <td>${(d.s.lab*100).toFixed(1)}%</td>
-      <td>${(d.s.ind*100).toFixed(1)}%</td>
-    `;
-    districtTable.appendChild(tr);
+function resetWard(){
+  const cfg = readConfig();
+  STATE.week = 0;
+  // Hidden "true" baseline for a marginal-ish ward (slightly behind)
+  STATE.true = softNormalize({
+    con: clamp(0.33 + rnorm(0,0.02), 0.25, 0.42),
+    lab: clamp(0.43 + rnorm(0,0.02), 0.30, 0.55),
+    ld : clamp(0.16 + rnorm(0,0.015),0.08, 0.28),
+    oth: clamp(0.08 + rnorm(0,0.01), 0.03, 0.12)
+  });
+  // Model starts a bit wrong
+  STATE.model = softNormalize({
+    con: clamp(STATE.true.con + rnorm(0,0.02), 0.20, 0.55),
+    lab: clamp(STATE.true.lab + rnorm(0,0.02), 0.20, 0.65),
+    ld : clamp(STATE.true.ld  + rnorm(0,0.015),0.05, 0.35),
+    oth: clamp(STATE.true.oth + rnorm(0,0.01), 0.02, 0.15)
   });
 
-  log.textContent=GAME.log.slice(-10).join("\n")||"—";
-  renderHQ();
+  STATE.confidence = 0.35;
+  STATE.burnout = 0.18;
+  STATE.gotvPrep = 0.10;
+
+  // IDs: start with a thin base
+  const known = Math.round(cfg.electorate * 0.06);
+  const con = Math.round(known*0.28);
+  const lab = Math.round(known*0.26);
+  const ld  = Math.round(known*0.14);
+  const oth = Math.round(known*0.06);
+  STATE.ids = { con, lab, ld, oth, unk: Math.max(0, cfg.electorate - (con+lab+ld+oth)) };
+
+  STATE.lastOps = null;
+  STATE.pendingPollWeeks = 0;
+  STATE.pendingPoll = null;
+
+  UI.log.innerHTML = "";
+  log(pill("RESET","warn"), `Ward regenerated. Hidden baseline: a marginal with realistic uncertainty. Your job: improve <b>confidence</b>, create <b>persuasion</b>, then <b>turn it out</b>.`);
+  updateUI();
 }
 
-/* ================= INIT ================= */
-populateHQ();
-render();
+function applyEvent(cfg){
+  // Random weekly drift + occasional discrete events
+  // Drift magnitude scales with volatility and proximity to election.
+  const timePressure = clamp(1.0 + (1 - (cfg.weeksToElection/52))*0.55, 1.0, 1.55);
+  const driftScale = (0.004 + 0.012*cfg.volatility) * timePressure;
+
+  // macro drift: usually small
+  const macro = rnorm(0, driftScale);
+
+  // by default macro helps/opposes Con randomly relative to rivals
+  STATE.true.con = clamp(STATE.true.con + macro, 0.18, 0.58);
+  // rivals adjust to keep sums sane
+  const rivalShift = -macro;
+  // distribute across rivals with noise
+  STATE.true.lab = clamp(STATE.true.lab + rivalShift*0.62 + rnorm(0, driftScale*0.5), 0.18, 0.70);
+  STATE.true.ld  = clamp(STATE.true.ld  + rivalShift*0.25 + rnorm(0, driftScale*0.35),0.05, 0.40);
+  STATE.true.oth = clamp(STATE.true.oth + rivalShift*0.13 + rnorm(0, driftScale*0.25),0.02, 0.25);
+  softNormalize(STATE.true);
+
+  // occasional issue shock
+  if(rnd() < (0.12 + 0.10*cfg.volatility)){
+    const issues = ["services","housing","tax","crime"];
+    const issue = issues[Math.floor(rnd()*issues.length)];
+    const sal = cfg.salience[issue];
+    // shock size and direction
+    const dir = rnd()<0.5 ? -1 : 1;
+    const shock = dir * (0.006 + 0.018*sal) * (0.65 + 0.9*cfg.volatility);
+    // assume shocks often hurt incumbents; here Con is treated as local brand with trust modifier via candidate style
+    STATE.true.con = clamp(STATE.true.con + shock, 0.18, 0.58);
+    // distribute opposite to Lab/LD mostly
+    STATE.true.lab = clamp(STATE.true.lab - shock*0.65, 0.18, 0.70);
+    STATE.true.ld  = clamp(STATE.true.ld  - shock*0.25, 0.05, 0.40);
+    STATE.true.oth = clamp(STATE.true.oth - shock*0.10, 0.02, 0.25);
+    softNormalize(STATE.true);
+
+    const dirWord = shock>0 ? "helped" : "hurt";
+    log(pill("WARD ISSUE","warn"), `A local <b>${issue}</b> shock ${dirWord} the Con brand. True intention moved by ${(Math.abs(shock)*100).toFixed(1)}pp (hidden).`);
+  }
+}
+
+function canvassAndOperate(cfg, gotvMode=false){
+  const cand = candidateProfile(cfg.candidateStyle);
+  const msg = messageAlignment(cfg);
+
+  // Effectiveness declines with burnout; high hours can increase burnout.
+  const eff = clamp(1.0 - 0.55*STATE.burnout, 0.35, 1.0);
+
+  // Data discipline reduces coverage but improves quality.
+  const coverageFactor = clamp(0.55 + 0.65*(1 - cfg.dataDiscipline), 0.45, 1.20);
+
+  // Hours -> doors; burnout and discipline reduce yield
+  const baseDoors = cfg.activistHours * (1.35 + 0.65*(1 - cfg.volatility)); // easier in less volatile/denser wards
+  const doors = Math.max(0, Math.round(baseDoors * eff * coverageFactor));
+
+  // Contact rate depends on candidate vibe + time pressure (closer election more likely contact attempts)
+  const timePressure = clamp(1.0 + (1 - (cfg.weeksToElection/52))*0.45, 1.0, 1.45);
+  const contactRate = clamp(0.28 + 0.22*cand.doorstepVibe + 0.06*timePressure - 0.10*STATE.burnout, 0.18, 0.62);
+  const contacts = Math.round(doors * contactRate);
+
+  // Bias: route choice + activist comfort + candidate style + low discipline + burnout
+  const routeBias = clamp(0.10 + 0.25*(1 - cfg.dataDiscipline) + 0.20*STATE.burnout + (cand.dataQ<0.75 ? 0.05 : 0), 0.08, 0.62);
+
+  // New IDs scale with contacts, reduced if already lots identified
+  const idCeiling = clamp(1 - ((STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth)/cfg.electorate), 0.10, 0.95);
+  const newIDs = Math.round(contacts * (0.55 + 0.25*cfg.dataDiscipline) * idCeiling);
+
+  // Assign IDs based on a biased view of true (you tend to canvass friendlier streets)
+  const biasTowardCon = (rnd()<0.5 ? 1 : -1) * routeBias * 0.08; // can even bias against you
+  const observed = softNormalize({
+    con: clamp(STATE.true.con + biasTowardCon + rnorm(0,0.01), 0.05, 0.80),
+    lab: clamp(STATE.true.lab - biasTowardCon*0.60 + rnorm(0,0.01), 0.05, 0.85),
+    ld : clamp(STATE.true.ld  - biasTowardCon*0.25 + rnorm(0,0.008),0.02, 0.60),
+    oth: clamp(STATE.true.oth - biasTowardCon*0.15 + rnorm(0,0.008),0.01, 0.40)
+  });
+
+  // Update IDs roughly
+  const addCon = Math.round(newIDs * observed.con);
+  const addLab = Math.round(newIDs * observed.lab);
+  const addLD  = Math.round(newIDs * observed.ld);
+  const addOth = Math.max(0, newIDs - addCon - addLab - addLD);
+
+  STATE.ids.con += addCon; STATE.ids.lab += addLab; STATE.ids.ld += addLD; STATE.ids.oth += addOth;
+  const known = STATE.ids.con+STATE.ids.lab+STATE.ids.ld+STATE.ids.oth;
+  STATE.ids.unk = Math.max(0, cfg.electorate - known);
+
+  // Persuasion: message alignment * candidate persuasion * volatility (more persuadable) * diminishing returns
+  // GOTV mode focuses less on persuasion, more on turnout targeting
+  let swing = 0;
+  if(!gotvMode){
+    const diminishing = clamp(1 - (cfg.activistHours/300), 0.35, 1.0);
+    const persuadable = clamp(0.55 + 0.55*cfg.volatility, 0.60, 1.05);
+    const backlash = (rnd() < msg.backlash) ? -1 : 1; // sometimes message backfires locally
+    swing = backlash * (0.0008 + 0.0030*(msg.align-0.9)) * cand.persuasion * persuadable * diminishing;
+    // tighter data discipline improves persuasion targeting over time
+    swing *= (0.92 + 0.18*cfg.dataDiscipline);
+  } else {
+    swing = 0; // persuasion not focus
+  }
+
+  // Apply persuasion to TRUE intention (small)
+  if(swing !== 0){
+    STATE.true.con = clamp(STATE.true.con + swing, 0.18, 0.58);
+    // take from best rival more
+    const rival = (STATE.true.lab >= STATE.true.ld) ? "lab" : "ld";
+    STATE.true[rival] = clamp(STATE.true[rival] - swing*0.85, 0.05, 0.80);
+    STATE.true.oth = clamp(STATE.true.oth - swing*0.15, 0.02, 0.25);
+    softNormalize(STATE.true);
+  }
+
+  // Model update: you pull model slightly toward observed, scaled by data quality & discipline & confidence
+  const dq = clamp(0.55 + 0.35*cfg.dataDiscipline, 0.55, 0.90) * cand.dataQ * (1 - 0.25*STATE.burnout);
+  const learnRate = clamp(0.06 + 0.10*dq, 0.06, 0.18);
+
+  STATE.model.con = clamp(STATE.model.con + learnRate*(observed.con - STATE.model.con), 0.05, 0.80);
+  STATE.model.lab = clamp(STATE.model.lab + learnRate*(observed.lab - STATE.model.lab), 0.05, 0.85);
+  STATE.model.ld  = clamp(STATE.model.ld  + learnRate*(observed.ld  - STATE.model.ld ), 0.02, 0.60);
+  STATE.model.oth = clamp(STATE.model.oth + learnRate*(observed.oth - STATE.model.oth), 0.01, 0.40);
+  softNormalize(STATE.model);
+
+  // Confidence rises with IDs and data discipline; falls with burnout and bias
+  const idFrac = clamp(known / cfg.electorate, 0, 1);
+  const confGain = 0.04*(0.4 + 0.6*cfg.dataDiscipline) * (0.35 + 0.65*idFrac) * (1 - routeBias);
+  const confLoss = 0.015*STATE.burnout + 0.02*(routeBias-0.15>0 ? (routeBias-0.15) : 0);
+  STATE.confidence = clamp(STATE.confidence + confGain - confLoss, 0.08, 0.95);
+
+  // GOTV prep increases if you do activity (more if gotv)
+  const gotvGain = gotvMode ? 0.08 : 0.02;
+  STATE.gotvPrep = clamp(STATE.gotvPrep + gotvGain*(0.5 + 0.5*cfg.dataDiscipline), 0, 0.85);
+
+  // Burnout evolves with hours and proximity to election; discipline adds friction
+  const pressure = clamp(0.10 + 0.55*(1 - cfg.weeksToElection/52), 0.10, 0.65);
+  const burnUp = (cfg.activistHours/220) * (0.03 + 0.05*pressure) + 0.01*(cfg.dataDiscipline);
+  const burnDown = 0.012 + 0.01*(cfg.activistHours<60 ? 1 : 0); // easier recovery with lighter weeks
+  STATE.burnout = clamp(STATE.burnout + burnUp - burnDown, 0, 0.95);
+
+  // Candidate gaffe chance scales with time pressure and burnout (sloppy comms)
+  const gaffeChance = clamp(0.02 + 0.12*cand.gaffe*pressure + 0.06*STATE.burnout, 0.01, 0.35);
+  let gaffeHit = 0;
+  if(rnd() < gaffeChance && !gotvMode){
+    // gaffe usually hurts Con and increases volatility and decreases confidence
+    gaffeHit = -(0.006 + 0.016*rnd()) * (0.6 + 0.8*cfg.volatility);
+    STATE.true.con = clamp(STATE.true.con + gaffeHit, 0.18, 0.58);
+    // rivals gain
+    STATE.true.lab = clamp(STATE.true.lab - gaffeHit*0.70, 0.18, 0.70);
+    STATE.true.ld  = clamp(STATE.true.ld  - gaffeHit*0.22, 0.05, 0.40);
+    STATE.true.oth = clamp(STATE.true.oth - gaffeHit*0.08, 0.02, 0.25);
+    softNormalize(STATE.true);
+
+    STATE.confidence = clamp(STATE.confidence - 0.03, 0.08, 0.95);
+    log(pill("GAFFE","bad"), `Candidate mishap hits local socials. True Con intention shifted by ${(Math.abs(gaffeHit)*100).toFixed(1)}pp (hidden). Your internal model may lag until you poll or canvass widely.`);
+  }
+
+  // Store ops
+  const qualityTag = dq > 0.72 ? "Good data quality" : dq > 0.60 ? "Mixed data quality" : "Noisy returns";
+  const swingNote = gotvMode ? "GOTV focus (no persuasion)" :
+    (swing>0 ? "Persuasion gained" : (swing<0 ? "Message backlash" : "No net movement"));
+
+  STATE.lastOps = { doors, contacts, newIDs, bias: routeBias, swing, qualityTag, swingNote };
+  return STATE.lastOps;
+}
+
+function processPendingPoll(cfg){
+  if(STATE.pendingPollWeeks > 0){
+    STATE.pendingPollWeeks -= 1;
+    if(STATE.pendingPollWeeks === 0 && STATE.pendingPoll){
+      // reveal poll result and update model
+      const p = STATE.pendingPoll;
+      // update model toward poll, with weight
+      const w = clamp(0.35 + 0.35*STATE.confidence, 0.35, 0.70); // if already confident, poll adjusts less
+      STATE.model.con = clamp(STATE.model.con + w*(p.con - STATE.model.con), 0.05, 0.80);
+      STATE.model.lab = clamp(STATE.model.lab + w*(p.lab - STATE.model.lab), 0.05, 0.85);
+      STATE.model.ld  = clamp(STATE.model.ld  + w*(p.ld  - STATE.model.ld ), 0.02, 0.60);
+      STATE.model.oth = clamp(STATE.model.oth + w*(p.oth - STATE.model.oth), 0.01, 0.40);
+      softNormalize(STATE.model);
+
+      // confidence increases (poll anchors), but leak risk can hurt true support slightly
+      STATE.confidence = clamp(STATE.confidence + 0.10, 0.08, 0.95);
+
+      if(p.leak){
+        const hit = -(0.004 + 0.010*rnd());
+        STATE.true.con = clamp(STATE.true.con + hit, 0.18, 0.58);
+        STATE.true.lab = clamp(STATE.true.lab - hit*0.70, 0.18, 0.70);
+        STATE.true.ld  = clamp(STATE.true.ld  - hit*0.20, 0.05, 0.40);
+        STATE.true.oth = clamp(STATE.true.oth - hit*0.10, 0.02, 0.25);
+        softNormalize(STATE.true);
+        log(pill("POLL LEAK","bad"), `Ward poll leaks. Brief backlash hits Con by ${(Math.abs(hit)*100).toFixed(1)}pp (hidden).`);
+      }
+
+      log(pill("POLL RESULT","warn"),
+        `Ward poll returns (with error): Con <b>${fmtPct(p.con)}</b>, Lab ${fmtPct(p.lab)}, LD ${fmtPct(p.ld)}, Oth ${fmtPct(p.oth)}.
+         Your model shifts toward this anchor; confidence improves.`);
+      STATE.pendingPoll = null;
+    }
+  }
+}
+
+function commissionPoll(){
+  const cfg = readConfig();
+  // Poll has sampling error and a small "house effect"
+  // Accuracy depends on weeksToElection and volatility.
+  const baseMoE = 0.03 + 0.03*cfg.volatility + (cfg.weeksToElection<10 ? 0.01 : 0);
+  const house = rnorm(0, 0.008); // small lean one way
+  const con = clamp(STATE.true.con + rnorm(0, baseMoE/1.96) + house, 0.05, 0.80);
+  const lab = clamp(STATE.true.lab + rnorm(0, baseMoE/1.96) - house*0.60, 0.05, 0.85);
+  const ld  = clamp(STATE.true.ld  + rnorm(0, baseMoE/2.3),  0.02, 0.60);
+  let oth   = clamp(STATE.true.oth + rnorm(0, baseMoE/2.6),  0.01, 0.40);
+
+  const poll = softNormalize({con,lab,ld,oth});
+  // chance of leak rises closer to election and if you're behind
+  const behind = (STATE.model.con < Math.max(STATE.model.lab,STATE.model.ld)) ? 1 : 0;
+  const leakChance = clamp(0.06 + 0.10*(1 - cfg.weeksToElection/52) + 0.06*behind, 0.03, 0.22);
+  poll.leak = rnd() < leakChance;
+
+  // Poll takes 2-3 weeks
+  STATE.pendingPollWeeks = (rnd()<0.55) ? 2 : 3;
+  STATE.pendingPoll = poll;
+
+  log(pill("POLL ORDERED","warn"), `Ward poll commissioned. Results expected in <b>${STATE.pendingPollWeeks}</b> weeks. (Sampling error + house effects apply.)`);
+}
+
+function randomEvent(){
+  const cfg = readConfig();
+  const cand = candidateProfile(cfg.candidateStyle);
+  const pressure = clamp(0.10 + 0.55*(1 - cfg.weeksToElection/52), 0.10, 0.65);
+
+  const roll = rnd();
+  if(roll < 0.30){
+    // Opponent blunder helps Con
+    const swing = (0.006 + 0.016*rnd())*(0.6 + 0.9*cfg.volatility);
+    STATE.true.con = clamp(STATE.true.con + swing, 0.18, 0.58);
+    STATE.true.lab = clamp(STATE.true.lab - swing*0.70, 0.18, 0.70);
+    STATE.true.ld  = clamp(STATE.true.ld  - swing*0.20, 0.05, 0.40);
+    STATE.true.oth = clamp(STATE.true.oth - swing*0.10, 0.02, 0.25);
+    softNormalize(STATE.true);
+    log(pill("OPPONENT ERROR","good"), `Opposition candidate stumbles at a public meeting. True Con intention +${(swing*100).toFixed(1)}pp (hidden).`);
+  } else if(roll < 0.62){
+    // Local service failure blamed on council brand (often hurts incumbents)
+    const hit = -(0.006 + 0.018*rnd())*(0.65 + 0.9*cfg.volatility);
+    STATE.true.con = clamp(STATE.true.con + hit, 0.18, 0.58);
+    STATE.true.lab = clamp(STATE.true.lab - hit*0.72, 0.18, 0.70);
+    STATE.true.ld  = clamp(STATE.true.ld  - hit*0.18, 0.05, 0.40);
+    STATE.true.oth = clamp(STATE.true.oth - hit*0.10, 0.02, 0.25);
+    softNormalize(STATE.true);
+    STATE.confidence = clamp(STATE.confidence - 0.02, 0.08, 0.95);
+    log(pill("LOCAL OUTRAGE","bad"), `A local services incident gives opponents traction. True Con intention −${(Math.abs(hit)*100).toFixed(1)}pp (hidden).`);
+  } else {
+    // Media spotlight: can go either way depending on candidate and message discipline
+    const msg = messageAlignment(cfg);
+    const performance = (0.55*cand.persuasion + 0.25*(1 - cand.gaffe) + 0.20*(1 - msg.backlash)) - 0.20*STATE.burnout;
+    const dir = (performance + rnorm(0,0.12)) > 0.55 ? 1 : -1;
+    const mag = (0.005 + 0.017*rnd())*(0.55 + 0.8*pressure);
+    const delta = dir*mag;
+    STATE.true.con = clamp(STATE.true.con + delta, 0.18, 0.58);
+    // balance
+    const rival = (STATE.true.lab >= STATE.true.ld) ? "lab" : "ld";
+    STATE.true[rival] = clamp(STATE.true[rival] - delta*0.85, 0.05, 0.80);
+    STATE.true.oth = clamp(STATE.true.oth - delta*0.15, 0.02, 0.25);
+    softNormalize(STATE.true);
+
+    log(dir>0 ? pill("MEDIA WIN","good") : pill("MEDIA HIT","bad"),
+      `Regional press attention. Candidate performance ${dir>0 ? "lands well" : "goes poorly"}.
+       True Con intention ${dir>0 ? "+" : "−"}${(Math.abs(delta)*100).toFixed(1)}pp (hidden).`);
+  }
+}
+
+function gotvPushOneWeek(){
+  const cfg = readConfig();
+  // GOTV push: reduces persuasion activity note, increases turnout among your identified supporters
+  const ops = canvassAndOperate(cfg, true);
+
+  // GOTV effect scales with prep, IDs, and burnout (too burnt = sloppy)
+  const idConFrac = clamp(STATE.ids.con / cfg.electorate, 0, 0.35);
+  const gotvEff = clamp((0.6 + 0.9*STATE.gotvPrep) * (0.7 + 0.8*idConFrac) * (1 - 0.45*STATE.burnout), 0.2, 1.35);
+
+  // Convert into a turnout lift for Con relative to others (does not change "intention", changes election day math)
+  // Here we approximate by nudging true support a tiny bit in model as "likely voters"
+  const lift = 0.002 + 0.010*gotvEff * (cfg.weeksToElection<=8 ? 1.15 : 0.85);
+  STATE.model.con = clamp(STATE.model.con + lift, 0.05, 0.80);
+  // take from rivals in model only (likely voters shift)
+  const rival = (STATE.model.lab >= STATE.model.ld) ? "lab" : "ld";
+  STATE.model[rival] = clamp(STATE.model[rival] - lift*0.85, 0.05, 0.85);
+  STATE.model.oth = clamp(STATE.model.oth - lift*0.15, 0.01, 0.40);
+  softNormalize(STATE.model);
+
+  log(pill("GOTV PUSH","warn"),
+    `GOTV week executed. Identified Con universe: <b>${fmtInt(STATE.ids.con)}</b>. GOTV effectiveness ${(gotvEff*100).toFixed(0)}%.
+     Model “likely vote” Con +${(lift*100).toFixed(2)}pp.`);
+}
+
+function runWeek(){
+  const cfg = readConfig();
+
+  // Each week the clock advances: weeks to election decreases
+  // but never below 1 in the UI; we also move STATE.week.
+  STATE.week += 1;
+  UI.weeksToElection.value = clamp(cfg.weeksToElection - 1, 1, 52);
+
+  // Apply background drift and occasional shocks
+  applyEvent(cfg);
+
+  // Process any pending poll (lag)
+  processPendingPoll(cfg);
+
+  // Run field operations for the week (canvass + persuasion)
+  const ops = canvassAndOperate(cfg, false);
+
+  const msg = messageAlignment(cfg);
+  const lead = (STATE.model.con - Math.max(STATE.model.lab, STATE.model.ld))*100;
+
+  log(pill("WEEK","warn"),
+    `Field week: ${fmtInt(ops.doors)} doors, ${fmtInt(ops.contacts)} contacts, ${fmtInt(ops.newIDs)} new IDs.
+     Message alignment ${(msg.align*100).toFixed(0)}% (backlash risk ${(msg.backlash*100).toFixed(0)}%).
+     Current model lead vs best rival: <b>${lead.toFixed(1)}pp</b>.`);
+
+  updateUI();
+}
+
+function bind(){
+  const inputs = [
+    UI.weeksToElection, UI.electorate, UI.turnoutBase, UI.volatility,
+    UI.salienceServices, UI.salienceHousing, UI.salienceTax, UI.salienceCrime,
+    UI.message, UI.candidateStyle, UI.activistHours, UI.dataDiscipline
+  ];
+  inputs.forEach(el=>el.addEventListener("input", updateUI));
+
+  UI.btnReset.addEventListener("click", resetWard);
+  UI.btnWeek.addEventListener("click", runWeek);
+  UI.btn4Weeks.addEventListener("click", ()=>{ for(let i=0;i<4;i++) runWeek(); });
+  UI.btnPoll.addEventListener("click", ()=>commissionPoll());
+  UI.btnGOTV.addEventListener("click", ()=>{ gotvPushOneWeek(); runWeek(); });
+  UI.btnScandal.addEventListener("click", ()=>{ randomEvent(); updateUI(); });
+}
+
+bind();
+resetWard();
 </script>
-
 </body>
 </html>
